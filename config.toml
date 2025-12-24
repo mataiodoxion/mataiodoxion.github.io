@@ -1,5 +1,6 @@
 # The URL the site will be built for
-base_url = "https://mataiodoxion.github.io"
+# base_url = "https://mataiodoxion.github.io"
+base_url = "/"
 
 theme = "terminus"
 
