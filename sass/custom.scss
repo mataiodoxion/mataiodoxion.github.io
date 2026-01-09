@@ -1,0 +1,7 @@
+pre {
+    background: color-mix(in srgb, var(--background-color), black 20%) !important;
+}
+
+code {
+    background: color-mix(in srgb, var(--background-color) black 20%);
+}
