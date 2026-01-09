@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://mataiodoxion.github.io/</loc>
+    </url>
+    <url>
+        <loc>https://mataiodoxion.github.io/blog/</loc>
+    </url>
+    <url>
+        <loc>https://mataiodoxion.github.io/blog/page/1/</loc>
+    </url>
+    <url>
+        <loc>https://mataiodoxion.github.io/blog/smashing-morts-server-1/</loc>
+        <lastmod>2025-12-09</lastmod>
+    </url>
+    <url>
+        <loc>https://mataiodoxion.github.io/blog/smashing-morts-server-2/</loc>
+        <lastmod>2025-12-10</lastmod>
+    </url>
+    <url>
+        <loc>https://mataiodoxion.github.io/blog/smashing-morts-server-3/</loc>
+        <lastmod>2026-01-04</lastmod>
+    </url>
+</urlset>

