@@ -2,6 +2,9 @@
 title = "Smashing Mort's Server for Fun and No Profit 2"
 description = "Ended up discovering a pretty critical RCE on the deployed server"
 date = 2025-12-10
+
+[taxonomies]
+tags = ["cracking"]
 +++
 
 Following the previous post, I had some ideas to try running a new path traversal technique and maybe searching for some other data leakage. 

@@ -1,7 +1,10 @@
 +++
-title = "Smashing Mort's Server for Fun and No Profit 3"
+title = "[SCRAPPED] Smashing Mort's Server for Fun and No Profit 3"
 description = "Since I'm bored, let's try some Docker escapes"
 date = 2026-01-04
+
+[taxonomies]
+tags = ["cracking"]
 +++
 
 After "RCE exploits" (if you can even call it that since it was pretty much intended), I proposed some potential solutions I'd be interesting in working on:

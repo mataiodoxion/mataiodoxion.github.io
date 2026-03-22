@@ -2,6 +2,9 @@
 title = "Smashing Mort's Server for Fun and No Profit 1"
 description = "Ported from my original blog post hosted on my Jekyll site"
 date = 2025-12-09
+
+[taxonomies]
+tags = ["cracking"]
 +++
 
 Basically, Mr. Mort's template flask server hosts an option for managing user's PFPs. I was able to find a **path traversal vulnerability** in the server which allows me to read any file I want on the host computer (including `/etc/passwd` which I used for this writeup) which effectively gives me full read access to any system this server is hosted on :D. And all you need is a regular user account.
