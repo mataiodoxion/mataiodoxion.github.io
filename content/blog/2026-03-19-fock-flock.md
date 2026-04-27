@@ -1,23 +1,13 @@
 +++
 title = "Fock Flock"
-description = "An idea for a nonprofit based project: fighting back against Flock."
+description = "An overview of Flock Safety surveillance."
 date = 2026-03-19
 
 [taxonomies]
 tags = ["surveillance"]
 +++
 
-# Preface
-
-Our CS teacher recently gave our class a project to collaborate (ultimately) with some nonprofit organization to do some good in the world. This would be completed in stages:
-
-1. Brainstorming some improvements for that nonprofit's site;
-2. Prototyping and pitching features/improvements;
-3. Hopefully connecting and collaborating in the future as full time contributors.
-
-# Flock
-
-[Flock](https://en.wikipedia.org/wiki/Flock_Safety) is a company that builds surveillance systems explicitly intended to track people as they go about their daily lives. More specifically: they specialize in selling Automatic License Plater Readers (ALPRs) to track people, gunshot detection systems to listen to people, and person lookup tools to -- you guessed it -- stalk people.
+[Flock Safety](https://en.wikipedia.org/wiki/Flock_Safety) is a company that builds surveillance systems explicitly intended to track people as they go about their daily lives. More specifically: they specialize in selling Automatic License Plater Readers (ALPRs) to track people, gunshot detection systems to listen to people, and person lookup tools to -- you guessed it -- stalk people.
 
 Flock claims to scan over 2 billion license plates every month (great!), but it's also imperative to note that they're an explicit proponent of establishing a techno-fascist surveillance state. I don't mean this as a sort of exaggeration, I mean that their company mission is literally to create a national surveillance apparatus to sell to data brokers and government agencies.
 
@@ -35,6 +25,8 @@ Flock responded by ~~fixing the security vulnerabilities~~ misleading their cust
 > Customers decide how their data is used, not Flock. [...]
 >
 > — <cite>[Flock Safety](https://www.flocksafety.com/blog/has-flock-been-hacked), 6 January 2026</cite>
+
+Information about security vulnerabilities in Flock is readily available online; you could probably find info a single, vague search actually. Case in point, we should not be trusting Flock to collect and handle highly sensitive data which directly maps to the movement of people. Flock -- simply put -- has, in no capacity, the qualifications, competence, or authority to correctly implement ALPRs from a purely technical standpoint.
 
 ### Abuse
 
