@@ -34,3 +34,5 @@ main_menu = [
 socials = [
     { name = "email", url = "mailto:mataiodoxion@protonmail.com" },
 ]
+
+color_scheme = "catppuccin-mocha"
