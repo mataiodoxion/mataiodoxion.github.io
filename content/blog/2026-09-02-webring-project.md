@@ -14,4 +14,18 @@ Webrings, in the simplest sense, link websites together through... links. The id
 
 ![ring of websites](/images/webring.png)
 
-There can also be a webring administrator who operated a central server which aggregates all of the websites and, alternatively, offers features like status checks, random routing, etc. Additionally, the presence of a central admin provides resilience to the network, so one website going down doesn't break the continuity of the ring.
+There can also be a webring administrator who operates a central server which aggregates all of the websites and, alternatively, offers features like status checks, random routing, etc. Additionally, the presence of a central admin provides resilience to the network, so one website going down doesn't break the continuity of the ring.
+
+
+## Roadmap
+
+I won't really dwell on the technical implementations in depth, but there's a few features I want:
+
+- **Interactive network graphs**, which supposedly indicate links between sites that don't pass through the main server. Think of something like a network visualization of badge wall connections.
+- **Registry filters**, which show sites by year (course level like CSA, CSH, etc.).
+- **Service trackers**, which record the basic accessibility of a site.
+
+
+## Example
+
+I was mainly inspired by a [NixOS webring](https://nixwebr.ing/), which pointed to some pretty cool websites and ran as a tiny Rust server. Of course, I'd actually be writing it in Java to integrate with Spring (don't worry!).
