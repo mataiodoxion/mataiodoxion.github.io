@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src-attr 'unsafe-inline'">
+
+    <title>Webring Project | Mataiodoxion</title>
+
+    <link rel="preload" href="https://mataiodoxion.github.io/fonts/FiraCode-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="https://mataiodoxion.github.io/fonts/FiraCode-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://mataiodoxion.github.io/css/style.css?h=6d2221c78b109beb6d13">
+    <link rel="stylesheet" href="https://mataiodoxion.github.io/custom.css?h=d3281feddbb69732b7c5">
+    <script src="https://mataiodoxion.github.io/js/auto-close-popover-on-resize.js?h=4ef87d6fc7b98b22e044" defer></script>
+    <script src="https://mataiodoxion.github.io/js/copy-code-to-clipboard.js?h=6eec6d5a29e934c1de32" defer></script>
+
+    <link rel="canonical" href="https://mataiodoxion.github.io/blog/webring-project/">
+    <link rel="alternate" type="application/atom+xml" href="https://mataiodoxion.github.io/atom.xml" title="Mataiodoxion">
+    
+    <meta name="description" content="A novel project for the new Java Spring stack: webrings!">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#211f1a">
+    <meta name="color-scheme" content="dark">
+
+    <meta property="og:title" content="Webring Project">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://mataiodoxion.github.io/blog/webring-project/">
+    <meta property="og:description" content="A novel project for the new Java Spring stack: webrings!">
+    <meta property="og:site_name" content="Mataiodoxion">
+    <meta property="og:updated_time" content="2026-09-10T17:43:14.114230099+00:00">
+    <meta property="article:published_time" content="2026-09-02T00:00:00+00:00">
+
+</head>
+
+<body class="layout-center" data-theme="catppuccin-mocha">
+    <header class="header">
+        <div class="header-container">
+            <span class="header-logo-container">
+                <a href="https://mataiodoxion.github.io">
+                    <span class="logo">Mataiodoxion</span>
+                </a>
+            </span>
+        </div>
+        <nav class="main-menu" aria-label="Main Menu">
+            <a class="skip-to-content" href="#main">Skip to main content</a>
+            <button class="main-menu-dropdown-button" popovertarget="nav-menu">Menu</button>
+            <ul id="nav-menu" class="main-menu-items" aria-label="Site Navigation" popover>
+                <li><a href="https://mataiodoxion.github.io/blog/">blog</a></li>
+                <li><a href="https://mataiodoxion.github.io/tags/">tags</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main id="main">
+        <article class="post content">
+            <header>
+                <h1 class="post-title">
+                    <a href="https://mataiodoxion.github.io/blog/webring-project/">Webring Project</a>
+                </h1>
+                <ul class="post-meta hidden">
+                    <li title="Published on 2026-09-02"><time datetime="2026-09-02">2026.09.02</time></li>
+                    <li role="separator" aria-hidden="true">::</li>
+                    <li title="601 words"><time datetime="PT4M">4 min</time> read</li>
+                </ul>
+            </header>
+
+<p>Taking CS at Del Norte means you'll probably have a personal website at some point, hence the hundreds of student websites deployed over the years. There is, however, one particular gripe I have with the current system: it's really inconvenient to find other people's websites.</p>
+<p>Wouldn't it be nice to have a network or platform to easily traverse classmates' websites? Theoretically, it could help build a sense of community within the CS enclave of DNHS and maybe some reminiscence of the old Internet.</p>
+<p>There's a relatively simple way to do this, and has been tried and tested for decades. It has since then lost its novelty, but the rising IndieWeb has picked the practice back up. What I'm referring to is the humble <em>webring</em>.</p>
+<p>Webrings, in the simplest sense, link websites together through... links. The idea is that some websites within a network link to each other, you eventually form a ring which connects all the websites one way or another:</p>
+<p><img src="/images/webring.png" alt="ring of websites" /></p>
+<p>There can also be a webring administrator who operates a central server which aggregates all of the websites and, alternatively, offers features like status checks, random routing, etc. Additionally, the presence of a central admin provides resilience to the network, so one website going down doesn't break the continuity of the ring.</p>
+<h2 id="roadmap">Roadmap<a class="post-anchor" href="#roadmap" aria-label="Anchor link for: roadmap"><span aria-hidden="true">#</span></a>
+</h2>
+<p>I won't really dwell on the technical implementations in depth, but there's a few features I want:</p>
+<ul>
+<li><strong>Interactive network graphs</strong>, which supposedly indicate links between sites that don't pass through the main server. Think of something like a network visualization of badge wall connections.</li>
+<li><strong>Registry filters</strong>, which show sites by year (course level like CSA, CSH, etc.).</li>
+<li><strong>Service trackers</strong>, which record the basic accessibility of a site.</li>
+</ul>
+<h2 id="example">Example<a class="post-anchor" href="#example" aria-label="Anchor link for: example"><span aria-hidden="true">#</span></a>
+</h2>
+<p>I was mainly inspired by a <a rel="external" href="https://nixwebr.ing/">NixOS webring</a>, which pointed to some pretty cool websites and ran as a tiny Rust server. Of course, I'd actually be writing it in Java to integrate with Spring (don't worry!).</p>
+<hr />
+<h2 id="lombok-setup">Lombok Setup<a class="post-anchor" href="#lombok-setup" aria-label="Anchor link for: lombok-setup"><span aria-hidden="true">#</span></a>
+</h2>
+<p>I've never worked with Lombok and Java much before, so I had to learn a bit of this. The data flow looks something like this:</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="plain"><span class="giallo-l"><span>data model --&gt; JpaRepository --&gt; ApiController</span></span></code></pre>
+<p>First, I defined the data structure:</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="java" data-name="Webring.java"><span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 1</span><span style="color: #CBA6F7;">package com</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">open</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">spring</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">mvc</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">webring</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 2</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 3</span><span style="color: #CBA6F7;">import</span><span> lombok</span><span style="color: #9399B2;">.</span><span>AllArgsConstructor</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 4</span><span style="color: #CBA6F7;">import</span><span> lombok</span><span style="color: #9399B2;">.</span><span>Data</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 5</span><span style="color: #CBA6F7;">import</span><span> lombok</span><span style="color: #9399B2;">.</span><span>NoArgsConstructor</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 6</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 7</span><span style="color: #CBA6F7;">import</span><span> java</span><span style="color: #9399B2;">.</span><span>util</span><span style="color: #9399B2;">.</span><span>ArrayList</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 8</span><span style="color: #CBA6F7;">import</span><span> java</span><span style="color: #9399B2;">.</span><span>util</span><span style="color: #9399B2;">.</span><span>List</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 9</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">10</span><span style="color: #CBA6F7;">import</span><span> jakarta</span><span style="color: #9399B2;">.</span><span>persistence</span><span style="color: #9399B2;">.</span><span>*</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">11</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">12</span><span style="color: #FAB387;">@Entity</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">13</span><span style="color: #FAB387;">@Data</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">14</span><span style="color: #FAB387;">@NoArgsConstructor</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">15</span><span style="color: #FAB387;">@AllArgsConstructor</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">16</span><span style="color: #CBA6F7;">public class</span><span style="color: #F9E2AF;font-style: italic;"> Webring</span><span style="color: #9399B2;"> {</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">17</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">18</span><span style="color: #FAB387;">    @Id</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">19</span><span style="color: #FAB387;">    @GeneratedValue</span><span style="color: #9399B2;">(</span><span>strategy</span><span style="color: #94E2D5;"> =</span><span> GenerationType</span><span style="color: #9399B2;">.</span><span>IDENTITY</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">20</span><span style="color: #CBA6F7;">    private Long</span><span> id</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">21</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">22</span><span style="color: #FAB387;">    @OneToMany</span><span style="color: #9399B2;">(</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">23</span><span>        mappedBy</span><span style="color: #94E2D5;"> =</span><span style="color: #A6E3A1;"> &quot;webring&quot;</span><span style="color: #9399B2;">,</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">24</span><span>        cascade</span><span style="color: #94E2D5;"> =</span><span> CascadeType</span><span style="color: #9399B2;">.</span><span>ALL</span><span style="color: #9399B2;">,</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">25</span><span>        orphanRemoval</span><span style="color: #94E2D5;"> =</span><span style="color: #F38BA8;"> true</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">26</span><span style="color: #9399B2;">    )</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">27</span><span style="color: #CBA6F7;">    private List</span><span style="color: #9399B2;">&lt;</span><span style="color: #CBA6F7;">WebringElement</span><span style="color: #9399B2;">&gt;</span><span> elements</span><span style="color: #94E2D5;"> =</span><span style="color: #CBA6F7;"> new ArrayList</span><span style="color: #9399B2;">&lt;&gt;();</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">28</span><span style="color: #9399B2;">}</span></span></code></pre>
+<p>We might want multiple webrings in the future (for different interests or some similar demarcation), so I defined the <code>WebringElement</code> as <code>@OneToMany</code>, which means there can be multiple <code>WebringElement</code>s for each <code>Webring</code> we create.</p>
+<p>Then, we define what a <code>WebringElement</code> actually is. We'll want a unique ID for the DB, a username (string), a site URL (string), and position index on the webring (integer):</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="java" data-file="WebringElement.java"><span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 1</span><span style="color: #CBA6F7;">package com</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">open</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">spring</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">mvc</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">webring</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 2</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 3</span><span style="color: #CBA6F7;">import</span><span> lombok</span><span style="color: #9399B2;">.</span><span>AllArgsConstructor</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 4</span><span style="color: #CBA6F7;">import</span><span> lombok</span><span style="color: #9399B2;">.</span><span>Data</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 5</span><span style="color: #CBA6F7;">import</span><span> lombok</span><span style="color: #9399B2;">.</span><span>NoArgsConstructor</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 6</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 7</span><span style="color: #CBA6F7;">import</span><span> jakarta</span><span style="color: #9399B2;">.</span><span>persistence</span><span style="color: #9399B2;">.</span><span>*</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 8</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 9</span><span style="color: #FAB387;">@Entity</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">10</span><span style="color: #FAB387;">@Data</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">11</span><span style="color: #FAB387;">@NoArgsConstructor</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">12</span><span style="color: #FAB387;">@AllArgsConstructor</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">13</span><span style="color: #CBA6F7;">public class</span><span style="color: #F9E2AF;font-style: italic;"> WebringElement</span><span style="color: #9399B2;"> {</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">14</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">15</span><span style="color: #FAB387;">    @Id</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">16</span><span style="color: #FAB387;">    @GeneratedValue</span><span style="color: #9399B2;">(</span><span>strategy</span><span style="color: #94E2D5;"> =</span><span> GenerationType</span><span style="color: #9399B2;">.</span><span>IDENTITY</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">17</span><span style="color: #CBA6F7;">    private Long</span><span> id</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">18</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">19</span><span style="color: #FAB387;">    @Column</span><span style="color: #9399B2;">(</span><span>nullable</span><span style="color: #94E2D5;"> =</span><span style="color: #F38BA8;"> false</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">20</span><span style="color: #CBA6F7;">    private String</span><span> username</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">21</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">22</span><span style="color: #FAB387;">    @Column</span><span style="color: #9399B2;">(</span><span>nullable</span><span style="color: #94E2D5;"> =</span><span style="color: #F38BA8;"> false</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">23</span><span style="color: #CBA6F7;">    private String</span><span> siteLink</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">24</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">25</span><span style="color: #FAB387;">    @Column</span><span style="color: #9399B2;">(</span><span>nullable</span><span style="color: #94E2D5;"> =</span><span style="color: #F38BA8;"> false</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">26</span><span style="color: #CBA6F7;">    private Integer</span><span> position</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">27</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">28</span><span style="color: #FAB387;">    @ManyToOne</span><span style="color: #9399B2;">(</span><span>fetch</span><span style="color: #94E2D5;"> =</span><span> FetchType</span><span style="color: #9399B2;">.</span><span>LAZY</span><span style="color: #9399B2;">,</span><span> optional</span><span style="color: #94E2D5;"> =</span><span style="color: #F38BA8;"> false</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">29</span><span style="color: #FAB387;">    @JoinColumn</span><span style="color: #9399B2;">(</span><span> name</span><span style="color: #94E2D5;"> =</span><span style="color: #A6E3A1;"> &quot;webring_id&quot;</span><span style="color: #9399B2;">,</span><span> nullable</span><span style="color: #94E2D5;"> =</span><span style="color: #F38BA8;"> false</span><span style="color: #9399B2;">,</span><span> foreignKey</span><span style="color: #94E2D5;"> =</span><span style="color: #FAB387;"> @ForeignKey</span><span style="color: #9399B2;">(</span><span>name</span><span style="color: #94E2D5;"> =</span><span style="color: #A6E3A1;"> &quot;fk_webring_element_webring&quot;</span><span style="color: #9399B2;">) )</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">30</span><span style="color: #FAB387;">    @ToStringExclude</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">31</span><span style="color: #CBA6F7;">    private Webring</span><span> webring</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">32</span><span style="color: #9399B2;">}</span></span></code></pre>
+<p>Similarly, we define a <code>ManyToOne</code> relation to <code>Webring</code>, meaning that there can be multiple <code>WebringElement</code>s for one <code>Webring</code>. As such, we have a bidirectional relation: Each <code>Webring</code> can contain multiple <code>WebringElement</code>s, but each <code>WebringElement</code> can only belond to one <code>Webring</code>.</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="plain"><span class="giallo-l"><span>Webring</span></span>
+<span class="giallo-l"><span>   │</span></span>
+<span class="giallo-l"><span>   ├── WebringElement</span></span>
+<span class="giallo-l"><span>   ├── WebringElement</span></span>
+<span class="giallo-l"><span>   └── WebringElement</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>Webring</span></span>
+<span class="giallo-l"><span>   │</span></span>
+<span class="giallo-l"><span>   ├── WebringElement</span></span>
+<span class="giallo-l"><span>   └── WebringElement</span></span></code></pre>
+<p>We use <code>@JoinColumn()</code> to generate the <code>webring_id</code> on the <code>webring_element</code> table:</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="plain"><span class="giallo-l"><span>webring_element</span></span>
+<span class="giallo-l"><span>┌────┬────────────┬──────────┐</span></span>
+<span class="giallo-l"><span>│ id │ webring_id │ username │</span></span>
+<span class="giallo-l"><span>├────┼────────────┼──────────┤</span></span>
+<span class="giallo-l"><span>│ 10 │     1      │ alice    │</span></span>
+<span class="giallo-l"><span>│ 11 │     1      │ bob      │</span></span>
+<span class="giallo-l"><span>│ 12 │     2      │ charlie  │</span></span>
+<span class="giallo-l"><span>└────┴────────────┴──────────┘</span></span></code></pre>
+<p>Fianlly, we use <code>@ToStringExclude</code> to disable some unnecessary features that cost a bit of compute time.</p>
+<p>Next, we'll need a <code>JpaRepository</code> to handle DB interactions. <code>JpaRepository</code> already provides a bunch of built in abstractions which I can just reuse, like <code>findAll()</code>, <code>getById()</code>, etc. I can write overrides and extensions later, but for the most part I just need a simple declaration of <code>extends</code>:</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="java" data-name="WebringJpaRepository.java"><span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">1</span><span style="color: #CBA6F7;">package com</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">open</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">spring</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">mvc</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">webring</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">2</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">3</span><span style="color: #CBA6F7;">import</span><span> org</span><span style="color: #9399B2;">.</span><span>springframework</span><span style="color: #9399B2;">.</span><span>data</span><span style="color: #9399B2;">.</span><span>jpa</span><span style="color: #9399B2;">.</span><span>repository</span><span style="color: #9399B2;">.</span><span>JpaRepository</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">4</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">5</span><span style="color: #CBA6F7;">public interface</span><span style="color: #F9E2AF;font-style: italic;"> WebringJpaRepository</span><span style="color: #CBA6F7;"> extends</span><span style="color: #F9E2AF;font-style: italic;"> JpaRepository</span><span style="color: #9399B2;">&lt;</span><span style="color: #CBA6F7;">Webring</span><span style="color: #9399B2;">,</span><span style="color: #CBA6F7;"> Long</span><span style="color: #9399B2;">&gt; {</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">6</span><span style="color: #9399B2;font-style: italic;">    // might want List&lt;Webring&gt; findByName(String name);</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">7</span><span style="color: #9399B2;">}</span></span></code></pre>
+<p>Finally, we have the <code>WebringApiController</code> that handles the API request:</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="java"><span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 1</span><span style="color: #CBA6F7;">package com</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">open</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">spring</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">mvc</span><span style="color: #9399B2;">.</span><span style="color: #CBA6F7;">webring</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 2</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 3</span><span style="color: #CBA6F7;">import</span><span> org</span><span style="color: #9399B2;">.</span><span>springframework</span><span style="color: #9399B2;">.</span><span>beans</span><span style="color: #9399B2;">.</span><span>factory</span><span style="color: #9399B2;">.</span><span>annotation</span><span style="color: #9399B2;">.</span><span>Autowired</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 4</span><span style="color: #CBA6F7;">import</span><span> org</span><span style="color: #9399B2;">.</span><span>springframework</span><span style="color: #9399B2;">.</span><span>http</span><span style="color: #9399B2;">.</span><span>HttpStatus</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 5</span><span style="color: #CBA6F7;">import</span><span> org</span><span style="color: #9399B2;">.</span><span>springframework</span><span style="color: #9399B2;">.</span><span>http</span><span style="color: #9399B2;">.</span><span>ResponseEntity</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 6</span><span style="color: #CBA6F7;">import</span><span> org</span><span style="color: #9399B2;">.</span><span>springframework</span><span style="color: #9399B2;">.</span><span>web</span><span style="color: #9399B2;">.</span><span>bind</span><span style="color: #9399B2;">.</span><span>annotation</span><span style="color: #9399B2;">.</span><span>*</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 7</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 8</span><span style="color: #CBA6F7;">import</span><span> java</span><span style="color: #9399B2;">.</span><span>util</span><span style="color: #9399B2;">.</span><span>List</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;"> 9</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">10</span><span style="color: #FAB387;">@RestController</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">11</span><span style="color: #FAB387;">@RequestMapping</span><span style="color: #9399B2;">(</span><span style="color: #A6E3A1;">&quot;/api/webring&quot;</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">12</span><span style="color: #CBA6F7;">public class</span><span style="color: #F9E2AF;font-style: italic;"> WebringApiController</span><span style="color: #9399B2;"> {</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">13</span><span style="color: #FAB387;">    @Autowired</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">14</span><span style="color: #CBA6F7;">    private WebringJpaRepository</span><span> repository</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">15</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">16</span><span style="color: #9399B2;font-style: italic;">    // GET members of webring</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">17</span><span style="color: #FAB387;">    @GetMapping</span><span style="color: #9399B2;">(</span><span style="color: #A6E3A1;">&quot;/&quot;</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">18</span><span style="color: #CBA6F7;">    public ResponseEntity</span><span style="color: #9399B2;">&lt;</span><span style="color: #CBA6F7;">List</span><span style="color: #9399B2;">&lt;</span><span style="color: #CBA6F7;">Webring</span><span style="color: #9399B2;">&gt;&gt;</span><span style="color: #89B4FA;font-style: italic;"> getMembers</span><span style="color: #9399B2;">() {</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">19</span><span style="color: #CBA6F7;">        return new ResponseEntity</span><span style="color: #9399B2;">&lt;&gt;(</span><span>repository</span><span style="color: #9399B2;">.</span><span style="color: #89B4FA;font-style: italic;">findAll</span><span style="color: #9399B2;">(),</span><span> HttpStatus</span><span style="color: #9399B2;">.</span><span>OK</span><span style="color: #9399B2;">);</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">20</span><span style="color: #9399B2;">    }</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #7F849C;">21</span><span style="color: #9399B2;">}</span></span></code></pre>
+<p>For now, I haven't implemented much at all (just a simple <code>GET</code> for all members), which uses the built in <code>findAll()</code> method.</p>
+<h2 id="sqlite">SQLite<a class="post-anchor" href="#sqlite" aria-label="Anchor link for: sqlite"><span aria-hidden="true">#</span></a>
+</h2>
+<p>The Spring server is already set up to handle table generation, so I just used <code>sqlite3</code> to view the db file:</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="plain"><span class="giallo-l"><span>sqlite&gt; .schema webring</span></span>
+<span class="giallo-l"><span>CREATE TABLE &quot;webring&quot; (&quot;id&quot; integer, primary key (&quot;id&quot;));</span></span>
+<span class="giallo-l"><span>sqlite&gt; .schema webring_element</span></span>
+<span class="giallo-l"><span>CREATE TABLE &quot;webring_element&quot; (&quot;position&quot; integer not null, &quot;id&quot; integer, &quot;webring_id&quot; bigint not null, &quot;site_link&quot; varchar(255) not null, &quot;username&quot; varchar(255) not null, primary key (&quot;id&quot;));</span></span></code></pre>
+<p>We can also see the table structures:</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="plain"><span class="giallo-l"><span>sqlite&gt; PRAGMA table_info(webring);</span></span>
+<span class="giallo-l"><span>╭─────┬──────┬─────────┬─────────┬────────────┬────╮</span></span>
+<span class="giallo-l"><span>│ cid │ name │  type   │ notnull │ dflt_value │ pk │</span></span>
+<span class="giallo-l"><span>╞═════╪══════╪═════════╪═════════╪════════════╪════╡</span></span>
+<span class="giallo-l"><span>│   0 │ id   │ INTEGER │       0 │ NULL       │  1 │</span></span>
+<span class="giallo-l"><span>╰─────┴──────┴─────────┴─────────┴────────────┴────╯</span></span>
+<span class="giallo-l"><span>sqlite&gt; PRAGMA table_info(webring_element);</span></span>
+<span class="giallo-l"><span>╭─────┬────────────┬──────────────┬─────────┬────────────┬────╮</span></span>
+<span class="giallo-l"><span>│ cid │    name    │     type     │ notnull │ dflt_value │ pk │</span></span>
+<span class="giallo-l"><span>╞═════╪════════════╪══════════════╪═════════╪════════════╪════╡</span></span>
+<span class="giallo-l"><span>│   0 │ position   │ INTEGER      │       1 │ NULL       │  0 │</span></span>
+<span class="giallo-l"><span>│   1 │ id         │ INTEGER      │       0 │ NULL       │  1 │</span></span>
+<span class="giallo-l"><span>│   2 │ webring_id │ bigint       │       1 │ NULL       │  0 │</span></span>
+<span class="giallo-l"><span>│   3 │ site_link  │ varchar(255) │       1 │ NULL       │  0 │</span></span>
+<span class="giallo-l"><span>│   4 │ username   │ varchar(255) │       1 │ NULL       │  0 │</span></span>
+<span class="giallo-l"><span>╰─────┴────────────┴──────────────┴─────────┴────────────┴────╯</span></span></code></pre>
+        </article>
+        <nav class="post-navigation">
+            <header class="post-navigation-title">
+                <h2>Read More Posts</h2>
+                <hr>
+            </header>
+            <div class="post-navigation-buttons">
+                <a rel="prev" href="https://mataiodoxion.github.io/blog/cte-retrospective/" aria-label="Prev article" aria-describedby="prev-title">
+                    [<span id="prev-title">CTE 2026</span>]&nbsp;&gt;
+                </a>
+            </div>
+        </nav>
+    </main>
+    <footer class="footer">
+        <address class="socials">
+            <ul>
+                <li>
+                    <a class="social-link" href="https://mataiodoxion.github.io/atom.xml" title="atom feed">
+                        <svg role="img" aria-label="atom feed">
+                            <use href="https://mataiodoxion.github.io/images/social_icons/rss.svg#icon" aria-hidden="true" />
+                        </svg>
+                    </a>
+                </li>
+                <li>
+                    <a class="social-link" rel="me" href="mailto:mataiodoxion@protonmail.com" title="email">
+                        <svg role="img" aria-label="email">
+                            <use href="https://mataiodoxion.github.io/images/social_icons/email.svg#icon" aria-hidden="true" />
+                        </svg>
+                    </a>
+                </li>
+            </ul>
+        </address>
+        <p class="copyright">
+            <span>© <time>2026</time></span>
+            <span>Powered by <a rel="external" href="https://www.getzola.org">Zola</a></span>
+            <span>Theme by <a rel="external" href="https://eyalkalderon.com">ebkalderon</a></span>
+        </p>
+    </footer>
+</body>
+
+</html>

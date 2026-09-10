@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+    <title>Mataiodoxion - surveillance</title>
+    <link rel="self" type="application/atom+xml" href="https://mataiodoxion.github.io/tags/surveillance/atom.xml"/>
+    <link rel="alternate" type="text/html" href="https://mataiodoxion.github.io"/>
+    <generator uri="https://www.getzola.org/">Zola</generator>
+    <updated>2026-03-19T00:00:00+00:00</updated>
+    <id>https://mataiodoxion.github.io/tags/surveillance/atom.xml</id>
+    <entry xml:lang="en">
+        <title>Fock Flock</title>
+        <published>2026-03-19T00:00:00+00:00</published>
+        <updated>2026-03-19T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://mataiodoxion.github.io/blog/fock-flock/"/>
+        <id>https://mataiodoxion.github.io/blog/fock-flock/</id>
+        
+        <content type="html" xml:base="https://mataiodoxion.github.io/blog/fock-flock/">&lt;p&gt;&lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;en.wikipedia.org&#x2F;wiki&#x2F;Flock_Safety&quot;&gt;Flock Safety&lt;&#x2F;a&gt; is a company that builds surveillance systems explicitly intended to track people as they go about their daily lives. More specifically: they specialize in selling Automatic License Plater Readers (ALPRs) to track people, gunshot detection systems to listen to people, and person lookup tools to -- you guessed it -- stalk people.&lt;&#x2F;p&gt;
+&lt;p&gt;Flock claims to scan over 2 billion license plates every month (great!), but it&#x27;s also imperative to note that they&#x27;re an explicit proponent of establishing a techno-fascist surveillance state. I don&#x27;t mean this as a sort of exaggeration, I mean that their company mission is literally to create a national surveillance apparatus to sell to data brokers and government agencies.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;no-security&quot;&gt;(No) Security&lt;a class=&quot;post-anchor&quot; href=&quot;#no-security&quot; aria-label=&quot;Anchor link for: no-security&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;#&lt;&#x2F;span&gt;&lt;&#x2F;a&gt;
+&lt;&#x2F;h3&gt;
+&lt;p&gt;Flock, for a company that handles highly sensitive information, does a pretty abysmal job of actually keeping that data safe. In fact, quite a few of their cameras were open to the internet to be exploited (with a weak default password, no password at all, or even no username!). Additionally, a &lt;em&gt;plethora&lt;&#x2F;em&gt; of other security vulnerabilities were found by a number of researchers, as reported by &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.youtube.com&#x2F;watch?v=uB0gr7Fh6lY&quot;&gt;Benn Jordan&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;
+&lt;p&gt;Flock responded by &lt;del&gt;fixing the security vulnerabilities&lt;&#x2F;del&gt; misleading their customers by saying their &lt;em&gt;cloud&lt;&#x2F;em&gt; systems had not been leaked and shifting the blame to the customers themselves:&lt;&#x2F;p&gt;
+&lt;blockquote&gt;
+&lt;h4 id=&quot;has-flock-been-hacked&quot;&gt;Has Flock Been Hacked?&lt;a class=&quot;post-anchor&quot; href=&quot;#has-flock-been-hacked&quot; aria-label=&quot;Anchor link for: has-flock-been-hacked&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;#&lt;&#x2F;span&gt;&lt;&#x2F;a&gt;
+&lt;&#x2F;h4&gt;
+&lt;p&gt;No, Flock’s cloud platform has not been hacked. There has not been a leak of Flock information. [...]&lt;&#x2F;p&gt;
+&lt;h4 id=&quot;has-flock-ever-had-a-data-breach&quot;&gt;Has Flock Ever Had a Data Breach?&lt;a class=&quot;post-anchor&quot; href=&quot;#has-flock-ever-had-a-data-breach&quot; aria-label=&quot;Anchor link for: has-flock-ever-had-a-data-breach&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;#&lt;&#x2F;span&gt;&lt;&#x2F;a&gt;
+&lt;&#x2F;h4&gt;
+&lt;p&gt;No, Flock Safety’s cloud platform has never experienced a data breach, and no customer data has ever been compromised. [...]&lt;&#x2F;p&gt;
+&lt;h4 id=&quot;how-secure-are-flock-s-cameras-and-data&quot;&gt;How Secure Are Flock&#x27;s Cameras and Data?&lt;a class=&quot;post-anchor&quot; href=&quot;#how-secure-are-flock-s-cameras-and-data&quot; aria-label=&quot;Anchor link for: how-secure-are-flock-s-cameras-and-data&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;#&lt;&#x2F;span&gt;&lt;&#x2F;a&gt;
+&lt;&#x2F;h4&gt;
+&lt;p&gt;Customers decide how their data is used, not Flock. [...]&lt;&#x2F;p&gt;
+&lt;p&gt;— &lt;cite&gt;&lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.flocksafety.com&#x2F;blog&#x2F;has-flock-been-hacked&quot;&gt;Flock Safety&lt;&#x2F;a&gt;, 6 January 2026&lt;&#x2F;cite&gt;&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;p&gt;Information about security vulnerabilities in Flock is readily available online; you could probably find info a single, vague search actually. Case in point, we should not be trusting Flock to collect and handle highly sensitive data which directly maps to the movement of people. Flock -- simply put -- has, in no capacity, the qualifications, competence, or authority to correctly implement ALPRs from a purely technical standpoint.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;abuse&quot;&gt;Abuse&lt;a class=&quot;post-anchor&quot; href=&quot;#abuse&quot; aria-label=&quot;Anchor link for: abuse&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;#&lt;&#x2F;span&gt;&lt;&#x2F;a&gt;
+&lt;&#x2F;h3&gt;
+&lt;p&gt;There have been a substantial number of documented cases of abuse. Operators (mainly police) of the ALPRs have used them to -- for example -- perform &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.eff.org&#x2F;deeplinks&#x2F;2020&#x2F;09&#x2F;flock-license-plate-reader-homeowners-association-safe-problems&quot;&gt;warrantless surveillance&lt;&#x2F;a&gt;, &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;apnews.com&#x2F;general-news-699236946e3140659fff8a2362e16f43&quot;&gt;stalk exes&lt;&#x2F;a&gt;, &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.404media.co&#x2F;a-texas-cop-searched-license-plate-cameras-nationwide-for-a-woman-who-got-an-abortion&#x2F;&quot;&gt;track women who had abortions (over state lines)&lt;&#x2F;a&gt;, and &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;inewsource.org&#x2F;2022&#x2F;01&#x2F;06&#x2F;police-share-license-plate-data&#x2F;&quot;&gt;sell data to data brokers&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;
+&lt;p&gt;The abuses are endless and forthcoming when you make a web search every few days. It&#x27;s no secret that the operators of the ALPRs skirt the law, while Flock really doesn&#x27;t care &lt;em&gt;and&lt;&#x2F;em&gt; enables them to do so by refusing to build in adequate safety measures.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;flock-enables-and-collaborates-with-government-agencies-especially-ice&quot;&gt;Flock Enables and Collaborates with Government Agencies (Especially ICE)&lt;a class=&quot;post-anchor&quot; href=&quot;#flock-enables-and-collaborates-with-government-agencies-especially-ice&quot; aria-label=&quot;Anchor link for: flock-enables-and-collaborates-with-government-agencies-especially-ice&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;#&lt;&#x2F;span&gt;&lt;&#x2F;a&gt;
+&lt;&#x2F;h3&gt;
+&lt;p&gt;Flock denies the fact, but it&#x27;s well documented:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.404media.co&#x2F;ice-taps-into-nationwide-ai-enabled-camera-network-data-shows&#x2F;&quot;&gt;ICE Taps into the Nationwide AI-Enabled Camera Network, Data Shows&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.404media.co&#x2F;police-unmask-millions-of-surveillance-targets-because-of-flock-redaction-error&#x2F;&quot;&gt;Police Unmask Millions of Surveillance Targets Because of Flock Redaction Error&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.404media.co&#x2F;ice-secret-service-navy-all-had-access-to-flocks-nationwide-network-of-cameras&#x2F;&quot;&gt;ICE, Secret Service, Navy All Had Access to Flock&#x27;s Nationwide Network of Cameras&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.aclu.org&#x2F;news&#x2F;privacy-technology&#x2F;flock-roundup&quot;&gt;Flock&#x27;s Aggressive Expansions Go Far Beyond Simple Driver Surveillance&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;calmatters.org&#x2F;economy&#x2F;technology&#x2F;2025&#x2F;06&#x2F;california-police-sharing-license-plate-reader-data&#x2F;&quot;&gt;California police are illegally sharing license plate data with ICE and border patrol&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;etc, etc, etc.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;Flock again denies that they collaborate with ICE and instead shift the blame to their customers:&lt;&#x2F;p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;No. Flock does not work with U.S. Immigration and Customs Enforcement (ICE) ... Every piece of data collected by Flock license plate readers is owned and controlled by the customer, whether that customer is a city, county, school district, or private organization.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;cite&gt;&lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.flocksafety.com&#x2F;blog&#x2F;does-flock-share-data-with-ice&quot;&gt;Flock Safety&lt;&#x2F;a&gt;, 6 January 2026&lt;&#x2F;cite&gt;&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;p&gt;The receipts are there. Flock shared data with CBP, ICE, and others then tried to lie about it. They do this all the time, and it&#x27;s the same old story every single time.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;warrantless-dragnet-surveillance&quot;&gt;Warrantless Dragnet Surveillance&lt;a class=&quot;post-anchor&quot; href=&quot;#warrantless-dragnet-surveillance&quot; aria-label=&quot;Anchor link for: warrantless-dragnet-surveillance&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;#&lt;&#x2F;span&gt;&lt;&#x2F;a&gt;
+&lt;&#x2F;h2&gt;
+&lt;p&gt;Flock as a system is, by definition, a system for warrantless dragnet surveillance. It works in two ways:&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;Flock sells ALPRs to local police departments and&#x2F;or cities, who have cameras erected. The Flock cameras then record and process data about each person passing by (regardless of whether or not they&#x27;re a criminal), then shares this data out without consent nationally (that is, it&#x27;s integrated into a national database for anybody who pays to access).&lt;&#x2F;li&gt;
+&lt;li&gt;Flock sells access to cameras and data directly. As with the case of ICE using Flock data to abduct people, Flock sells access to a &quot;national lookup tool&quot; which reportedly allows customers to input natural language, and Flock will pull up recordings which match that query. Again, it should be noted that Flock lied about selling data in this manner and collaborating with external agencies like ICE.&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;p&gt;Dragnet surveillance simply is not worth the amount of freedom is completely removes compared to the miniscule benefit. The net benefit is in the negatives. In fact, Flock is really, &lt;em&gt;really&lt;&#x2F;em&gt; ineffective at doing its job, and yet it still picks up billions of plates monthly. Those are billions of plates of innocent people being inducted into a national searchable database to be tracked without consent, without a warrant, and in violation of the constitution.&lt;&#x2F;p&gt;
+&lt;p&gt;Let&#x27;s take a look at San Diego:&lt;&#x2F;p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Officers conducted more than 244,000 investigative searches of ALPR data, which played a key role in advancing 361 cases.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;cite&gt;&lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.sandiego.gov&#x2F;sites&#x2F;default&#x2F;files&#x2F;2026-02&#x2F;sdpd-annual-surveillance-report-2025.pdf&quot;&gt;San Diego Annual Surveillance Report 2025&lt;&#x2F;a&gt;&lt;&#x2F;cite&gt;&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;p&gt;That&#x27;s right! That&#x27;s a 99.85% ineffective rate&lt;&#x2F;p&gt;
+&lt;p&gt;Unless you want to live in a dystopian police state, there really isn&#x27;t anything going for Flock (or unless you&#x27;re some power hungry government actor).&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;but-flock-helps-solve-cases&quot;&gt;But Flock Helps Solve Cases!&lt;a class=&quot;post-anchor&quot; href=&quot;#but-flock-helps-solve-cases&quot; aria-label=&quot;Anchor link for: but-flock-helps-solve-cases&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;#&lt;&#x2F;span&gt;&lt;&#x2F;a&gt;
+&lt;&#x2F;h2&gt;
+&lt;p&gt;Ok sure, Flock has helped with some cases, but these are the same type of cases that police have been solving for the last century. One could argue that setting up thousands of ALPRs for some chance to catch something could help with investigations (or has helped with a tiny amount), but police have been simply requesting already existing footage targeting specific areas for decades. It would be highly foolish to set up an entire surveillance apparatus that has been used to track people who have nothing to do with crime rather than focusing on targeted policing.&lt;&#x2F;p&gt;
+&lt;p&gt;The problem with ALPRs and Flock is that they&#x27;re a form of dragnet surveillance: they record everything that passes by and catch an overwhelming number of innocent people within that dragnet, making them vulnerable to abuse and control (as mentioned above). We should &lt;strong&gt;not&lt;&#x2F;strong&gt; be hooking up a nation wide system in a consolidated lookup tool, because that is quite literally a system intended explicitly for a &quot;papers, please!&quot; based authoritarian government. And we know this! They&#x27;ve been doing it for years, and yet most people simply don&#x27;t care.&lt;&#x2F;p&gt;
+&lt;p&gt;The emphasis here is &lt;em&gt;targeted&lt;&#x2F;em&gt; policing. That means warrants, access requests, localization, etc. to protect the majority of people who are affected by these systems (who are generally innocent).&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;then-what-alternative&quot;&gt;Then What Alternative?&lt;a class=&quot;post-anchor&quot; href=&quot;#then-what-alternative&quot; aria-label=&quot;Anchor link for: then-what-alternative&quot;&gt;&lt;span aria-hidden=&quot;true&quot;&gt;#&lt;&#x2F;span&gt;&lt;&#x2F;a&gt;
+&lt;&#x2F;h2&gt;
+&lt;p&gt;First, let&#x27;s assume we keep these ALPR systems (e.g. Flock, Ubicquia, Motorola). The best case scenario you&#x27;re going to get here is if jurisdiction is isolated to local communities. For example, San Diego -- one of the biggest and earliest adopters of ALPRs -- could restrict access to their data to exclusively their county... as opposed to funneling it directly into a national database and selling drivers&#x27; data. In this case, we keep the (little) benefit of a large dragnet surveillance system, while still maintaining some protections.&lt;&#x2F;p&gt;
+&lt;p&gt;Naturally, we&#x27;re still faced with problems of abuse (which comes with handing anybody the keys to a mass surveillance system) and the issue of Flock being unquestionably incompetent in relation to the data they handle. Thus, such an approach would require implementation of regulations including judicial warrants in addition to security updates to disconnect from the Flock network nationally. It&#x27;s not too clear if this is possible at all, and given the motive for the systems in the first place, it&#x27;s clear that Flock is in fact intended to be a drop-in mass surveillance system, so it&#x27;s pretty futile to try implementing these protections given the people running the show.&lt;&#x2F;p&gt;
+&lt;p&gt;So, the best alternative here is really just to erase the entire system. Quite frankly, it&#x27;s too volatile to keep a mass surveillance sitting around in the first place; even if you place protections, there are malicious actors who will abuse it anyway. For instance, back in 2014, an Executive Order (12,333) gave NSA the authority to spy on foreign soil; that is, protections at the time existed to protect domestic citizens on domestic soil, but the NSA had free reign to conduct surveillance on foreign soil. To no one&#x27;s surprise, the NSA simply tapped into domestic international calls and continued to spy on American citizens.&lt;&#x2F;p&gt;
+&lt;p&gt;Or, perhaps better known, Section 702 of the Foreign Intelligence Surveillance Act (FISA) allows the warrantless surveillance and intends to only target foreign citizens outside of the US. To surveil an American citizen, the government would have to acquire either a warrant. Yet, all the three letter agencies still conducts tens of thousands of illegal searches of Americans (including phone calls, emails, texts, browsing).&lt;&#x2F;p&gt;
+&lt;p&gt;Case in point, when the explicit (or implicit) intent of a system is to spy on people, and the people who are turning the gears to make it run are people who want to spy on you, then they probably are trying to spy on you. Historically, layering protections on top of that generally won&#x27;t work because they&#x27;re so damn adamant about spying on people. The whole thing is rotten to its core so long as the motive exists. As such, more &quot;feature updates&quot; and &quot;transparency reports&quot; (Flock) aren&#x27;t going to help people; the people who actually use these systems are people who have a very strong motive to surveil people, and they have demonstrated so countless times. It&#x27;s high time to throw the entire thing out.&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+</feed>
