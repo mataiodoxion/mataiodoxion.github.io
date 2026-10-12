@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src-attr 'unsafe-inline'">
+
+    <title>CSA MCQ 1 Review | Mataiodoxion</title>
+
+    <link rel="preload" href="https://mataiodoxion.github.io/fonts/FiraCode-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="https://mataiodoxion.github.io/fonts/FiraCode-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://mataiodoxion.github.io/css/style.css?h=6d2221c78b109beb6d13">
+    <link rel="stylesheet" href="https://mataiodoxion.github.io/custom.css?h=d3281feddbb69732b7c5">
+    <script src="https://mataiodoxion.github.io/js/auto-close-popover-on-resize.js?h=4ef87d6fc7b98b22e044" defer></script>
+    <script src="https://mataiodoxion.github.io/js/copy-code-to-clipboard.js?h=6eec6d5a29e934c1de32" defer></script>
+
+    <link rel="canonical" href="https://mataiodoxion.github.io/blog/mcq-1-review/">
+    <link rel="alternate" type="application/atom+xml" href="https://mataiodoxion.github.io/atom.xml" title="Mataiodoxion">
+    
+    <meta name="description" content="Revisions for CSA practice MCQ 1">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#211f1a">
+    <meta name="color-scheme" content="dark">
+
+    <meta property="og:title" content="CSA MCQ 1 Review">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://mataiodoxion.github.io/blog/mcq-1-review/">
+    <meta property="og:description" content="Revisions for CSA practice MCQ 1">
+    <meta property="og:site_name" content="Mataiodoxion">
+    <meta property="og:updated_time" content="2026-10-12T17:21:09.653992072+00:00">
+    <meta property="article:published_time" content="2026-10-12T00:00:00+00:00">
+
+</head>
+
+<body class="layout-center" data-theme="catppuccin-mocha">
+    <header class="header">
+        <div class="header-container">
+            <span class="header-logo-container">
+                <a href="https://mataiodoxion.github.io">
+                    <span class="logo">Mataiodoxion</span>
+                </a>
+            </span>
+        </div>
+        <nav class="main-menu" aria-label="Main Menu">
+            <a class="skip-to-content" href="#main">Skip to main content</a>
+            <button class="main-menu-dropdown-button" popovertarget="nav-menu">Menu</button>
+            <ul id="nav-menu" class="main-menu-items" aria-label="Site Navigation" popover>
+                <li><a href="https://mataiodoxion.github.io/blog/">blog</a></li>
+                <li><a href="https://mataiodoxion.github.io/tags/">tags</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main id="main">
+        <article class="post content">
+            <header>
+                <h1 class="post-title">
+                    <a href="https://mataiodoxion.github.io/blog/mcq-1-review/">CSA MCQ 1 Review</a>
+                </h1>
+                <ul class="post-meta hidden">
+                    <li title="Published on 2026-10-12"><time datetime="2026-10-12">2026.10.12</time></li>
+                    <li role="separator" aria-hidden="true">::</li>
+                    <li title="377 words"><time datetime="PT2M">2 min</time> read</li>
+                </ul>
+            </header>
+
+<h2 id="overview">Overview<a class="post-anchor" href="#overview" aria-label="Anchor link for: overview"><span aria-hidden="true">#</span></a>
+</h2>
+<p><strong>Score</strong>: 38/42</p>
+<p>Generally, the MCQ went pretty smoothly, and the only questions we missed either had to do with lack of familiarity in Collegeboard's Java abstractions or otherwise simple mistakes.</p>
+<h2 id="q7-print-hide-using-substrings-write-code">Q7 Print Hide using substrings - write code<a class="post-anchor" href="#q7-print-hide-using-substrings-write-code" aria-label="Anchor link for: q7-print-hide-using-substrings-write-code"><span aria-hidden="true">#</span></a>
+</h2>
+<blockquote>
+<p>Consider the following code segment.</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="java"><span class="giallo-l"><span style="color: #CBA6F7;">String</span><span> original</span><span style="color: #94E2D5;"> =</span><span style="color: #A6E3A1;"> &quot;DEFGHI&quot;</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">String</span><span> result</span><span style="color: #94E2D5;"> =</span><span style="color: #9399B2;font-style: italic;"> /* missing code */</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span>System</span><span style="color: #9399B2;">.</span><span>out</span><span style="color: #9399B2;">.</span><span style="color: #89B4FA;font-style: italic;">println</span><span style="color: #9399B2;">(</span><span>result</span><span style="color: #9399B2;">);</span></span></code></pre>
+<p>Which of the following can be used to replace <code>/* missing code */</code> so that this code segment prints the string <code>"HIDE"</code>?</p>
+</blockquote>
+<p>I chose <strong>(A) <code>original.substring(4) + original.substring(0, 1)</code></strong>, which was wrong, because <code>substring(a, b)</code> extracts substrings from index <code>a</code> to <code>b-1</code>. The correct answer would be <strong>(B) <code>original.substring(4) + original.substring(0, 2)</code></strong> to account for that indexing error.</p>
+<h2 id="q19-statement-using-random-numbers-describes-behavior">Q19 Statement using random numbers - describes behavior<a class="post-anchor" href="#q19-statement-using-random-numbers-describes-behavior" aria-label="Anchor link for: q19-statement-using-random-numbers-describes-behavior"><span aria-hidden="true">#</span></a>
+</h2>
+<blockquote>
+<p>Consider the following statement.</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="java"><span class="giallo-l"><span style="color: #CBA6F7;">int</span><span> r</span><span style="color: #94E2D5;"> =</span><span style="color: #9399B2;"> (</span><span style="color: #CBA6F7;">int</span><span style="color: #9399B2;">) (</span><span>Math</span><span style="color: #9399B2;">.</span><span style="color: #89B4FA;font-style: italic;">random</span><span style="color: #9399B2;">()</span><span style="color: #94E2D5;"> *</span><span style="color: #FAB387;"> 6</span><span style="color: #9399B2;">)</span><span style="color: #94E2D5;"> +</span><span style="color: #FAB387;"> 10</span><span style="color: #9399B2;">;</span></span></code></pre>
+<p>Which of the following best describes the behavior of the statement?</p>
+</blockquote>
+<p>I wrongly chose <strong>(D) It generates a random integer between <code>10</code> and <code>16</code>, inclusive, and assigns it to <code>r</code>.</strong> Collegeboard's <code>Math.random()</code> generates a random float between 0 (inclusive) and 1 (exclusive), which means that it would be impossible for <code>Math.random() * 6</code> to ever produce the integer <code>6</code>. The correct range would be from <code>0+10=10</code> to <code>5+10=15</code>, so <strong>(C) It generates a random integer between <code>10</code> and <code>15</code>, inclusive, and assigns it to <code>r</code>.</strong></p>
+<h2 id="q35-method-that-traverses-numbers-describe-behavior">Q35 Method that traverses numbers - describe behavior<a class="post-anchor" href="#q35-method-that-traverses-numbers-describe-behavior" aria-label="Anchor link for: q35-method-that-traverses-numbers-describe-behavior"><span aria-hidden="true">#</span></a>
+</h2>
+<blockquote>
+<p>Consider the following method.</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="java"><span class="giallo-l"><span style="color: #CBA6F7;">public static boolean</span><span style="color: #89B4FA;font-style: italic;"> mystery</span><span style="color: #9399B2;">(</span><span style="color: #CBA6F7;">ArrayList</span><span style="color: #94E2D5;">&lt;</span><span>Integer</span><span style="color: #94E2D5;">&gt;</span><span> numbers</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">{</span></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">  int</span><span> prev</span><span style="color: #94E2D5;"> =</span><span> Integer</span><span style="color: #9399B2;">.</span><span>MAX_VALUE</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">  for</span><span style="color: #9399B2;"> (</span><span style="color: #CBA6F7;">int</span><span> num</span><span style="color: #CBA6F7;"> :</span><span> numbers</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">  {</span></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">      if</span><span style="color: #9399B2;"> (</span><span>num </span><span style="color: #94E2D5;">&gt;</span><span> prev</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">      {</span></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">          return</span><span style="color: #F38BA8;"> false</span><span style="color: #9399B2;">;</span><span> </span></span>
+<span class="giallo-l"><span style="color: #9399B2;">      }</span></span>
+<span class="giallo-l"><span>      prev </span><span style="color: #94E2D5;">=</span><span> num</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">  }</span></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">  return</span><span style="color: #F38BA8;"> true</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">}</span></span></code></pre>
+<p>Which of the following best describes the behavior of the method?</p>
+</blockquote>
+<p>I incorrectly selected <strong>(C) It returns <code>true</code> if <code>numbers</code> is sorted from least to greatest and returns <code>false</code> otherwise.</strong>. This is likely due to misreading the comparison <code>num &gt; prev</code>, which would be checking if the next number of greater than the last (checking least to greatest), and returns false if that is the case. The correct answer is <strong>(D) It returns <code>true</code> if <code>numbers</code> is sorted from greatest to least and returns <code>false</code> otherwise.</strong></p>
+<h2 id="q41-traverse-colors-array-determine-result">Q41 Traverse colors array - determine result<a class="post-anchor" href="#q41-traverse-colors-array-determine-result" aria-label="Anchor link for: q41-traverse-colors-array-determine-result"><span aria-hidden="true">#</span></a>
+</h2>
+<blockquote>
+<p>Consider the following code segment.</p>
+<pre class="giallo" style="color: #CDD6F4; background-color: #1E1E2E;"><code data-lang="java"><span class="giallo-l"><span style="color: #CBA6F7;">String</span><span style="color: #9399B2;">[]</span><span> colors</span><span style="color: #94E2D5;"> =</span><span style="color: #9399B2;"> {</span><span style="color: #A6E3A1;">&quot;red&quot;</span><span style="color: #9399B2;">,</span><span style="color: #A6E3A1;"> &quot;green&quot;</span><span style="color: #9399B2;">,</span><span style="color: #A6E3A1;"> &quot;orange&quot;</span><span style="color: #9399B2;">,</span><span style="color: #A6E3A1;"> &quot;black&quot;</span><span style="color: #9399B2;">,</span><span style="color: #A6E3A1;"> &quot;yellow&quot;</span><span style="color: #9399B2;">,</span><span style="color: #A6E3A1;"> &quot;brown&quot;</span><span style="color: #9399B2;">};</span></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">int</span><span> result</span><span style="color: #94E2D5;"> = -</span><span style="color: #FAB387;">1</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">for</span><span style="color: #9399B2;"> (</span><span style="color: #CBA6F7;">int</span><span> j</span><span style="color: #94E2D5;"> =</span><span style="color: #FAB387;"> 0</span><span style="color: #9399B2;">;</span><span> j </span><span style="color: #94E2D5;">&lt;</span><span> colors</span><span style="color: #9399B2;">.</span><span>length</span><span style="color: #9399B2;">;</span><span> j</span><span style="color: #94E2D5;">++</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">{</span></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">    for</span><span style="color: #9399B2;"> (</span><span style="color: #CBA6F7;">int</span><span> k</span><span style="color: #94E2D5;"> =</span><span> j </span><span style="color: #94E2D5;">+</span><span style="color: #FAB387;"> 1</span><span style="color: #9399B2;">;</span><span> k </span><span style="color: #94E2D5;">&lt;</span><span> colors</span><span style="color: #9399B2;">.</span><span>length</span><span style="color: #9399B2;">;</span><span> k</span><span style="color: #94E2D5;">++</span><span style="color: #9399B2;">)</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">    {</span></span>
+<span class="giallo-l"><span style="color: #CBA6F7;">       if</span><span style="color: #9399B2;"> (</span><span>colors</span><span style="color: #9399B2;">[</span><span>j</span><span style="color: #9399B2;">].</span><span style="color: #89B4FA;font-style: italic;">length</span><span style="color: #9399B2;">()</span><span style="color: #94E2D5;"> ==</span><span> colors</span><span style="color: #9399B2;">[</span><span>k</span><span style="color: #9399B2;">].</span><span style="color: #89B4FA;font-style: italic;">length</span><span style="color: #9399B2;">())</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">        {</span></span>
+<span class="giallo-l"><span>            result </span><span style="color: #94E2D5;">=</span><span> k</span><span style="color: #9399B2;">;</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">        }</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">    }</span></span>
+<span class="giallo-l"><span style="color: #9399B2;">}</span></span></code></pre>
+<p>What is the value of <code>result</code> after executing this code segment?</p>
+</blockquote>
+<p>The code segment returns the segment of the second index of the last match of subsequent strings in an array of strings. I selected <strong>(C) 4</strong>, but it would take the index of the match <em>after</em>. So, for <code>"black"</code> and <code>"brown"</code> (the last match), the program would return the index of <code>"brown"</code>, which is <strong>(D) 5</strong>.</p>
+
+        </article>
+        <nav class="post-navigation">
+            <header class="post-navigation-title">
+                <h2>Read More Posts</h2>
+                <hr>
+            </header>
+            <div class="post-navigation-buttons">
+                <a rel="prev" href="https://mataiodoxion.github.io/blog/webring-project/" aria-label="Prev article" aria-describedby="prev-title">
+                    [<span id="prev-title">Webring Project</span>]&nbsp;&gt;
+                </a>
+            </div>
+        </nav>
+    </main>
+    <footer class="footer">
+        <address class="socials">
+            <ul>
+                <li>
+                    <a class="social-link" href="https://mataiodoxion.github.io/atom.xml" title="atom feed">
+                        <svg role="img" aria-label="atom feed">
+                            <use href="https://mataiodoxion.github.io/images/social_icons/rss.svg#icon" aria-hidden="true" />
+                        </svg>
+                    </a>
+                </li>
+                <li>
+                    <a class="social-link" rel="me" href="mailto:mataiodoxion@protonmail.com" title="email">
+                        <svg role="img" aria-label="email">
+                            <use href="https://mataiodoxion.github.io/images/social_icons/email.svg#icon" aria-hidden="true" />
+                        </svg>
+                    </a>
+                </li>
+            </ul>
+        </address>
+        <p class="copyright">
+            <span>© <time>2026</time></span>
+            <span>Powered by <a rel="external" href="https://www.getzola.org">Zola</a></span>
+            <span>Theme by <a rel="external" href="https://eyalkalderon.com">ebkalderon</a></span>
+        </p>
+    </footer>
+</body>
+
+</html>
